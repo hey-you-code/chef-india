@@ -1,0 +1,39 @@
+[
+    {
+        "menu": {
+          "items": []
+        },
+        "customerLocation": {
+          "city": "Mountain View",
+          "state": "California",
+          "postalCode": "94043",
+          "location": {
+            "locationName": "43 Amphitheatre Parkway",
+            "type": "Point",
+            "coordinates": [
+              -122.08400001749396,
+              37.4219981990569
+            ]
+          }
+        },
+        "eventType": {
+          "breakfast": {
+            "numberOfItems": 3
+          },
+          "snacks": {
+            "numberOfItems": 4
+          },
+          "lunch": {
+            "numberOfItems": 4
+          },
+          "dinner": {
+            "numberOfItems": 3
+          }
+        },
+        "eventTimings": {
+          "startDate": "2025-02-11",
+          "endDate": "2025-02-18"
+        },
+        "numberOfGuests": 8
+      }
+]
