@@ -1,7 +1,6 @@
 import { apiSlice } from "../api/apiSlice";
 
-// const BASE_URL =
-//   "http://10.0.2.2:9100/api/v1/auth/user";
+//  const BASE_URL = "http://10.0.2.2:9100/api/v1/auth/user";
 const BASE_URL = 'https://auth.cheffindia.com/api/v1/auth/user';
 
 export const authApiSlice = apiSlice.injectEndpoints({

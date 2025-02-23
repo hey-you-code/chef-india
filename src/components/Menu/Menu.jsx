@@ -192,7 +192,7 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
     );
   };
 
-  console.log("items: ", JSON.stringify(formData?.menu?.items, null, 2));
+  console.log('items: ', JSON.stringify(formData?.menu?.items, null, 2));
 
   return (
     <View style={{flex: 1}}>
@@ -339,16 +339,20 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={false}
           renderItem={({item}) => (
-            <MenuItem
-              id={item._id}
-              name={item.name}
-              description={item.description}
-              price={item.price}
-              image={item.image}
-              tags={item.tags?.map(tag => tag.toLowerCase())}
-              actionApplicable={actionApplicable}
-              preview={preview}
-            />
+            <View
+              style={{width: width * 0.95}}
+              className="items-center mx-auto">
+              <MenuItem
+                id={item._id}
+                name={item.name}
+                description={item.description}
+                price={item.price}
+                image={item.image}
+                tags={item.tags?.map(tag => tag.toLowerCase())}
+                actionApplicable={actionApplicable}
+                preview={preview}
+              />
+            </View>
           )}
           // Disable pagination when in search or filter mode
           onEndReached={!isSearchActive && !isFilterActive ? loadMore : null}
@@ -357,71 +361,76 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
           ListHeaderComponent={ListHeaderComponent}
           ListFooterComponent={
             !preview ? (
-              !isSearchActive &&
-              // !isFilterActive &&
-              (isFetching ? (
-                <View style={{height: 100}}>
-                  <ActivityIndicator size="small" color="#FF3130" />
-                </View>
-              ) : (
-                <View style={{height: 140}}>
-                  {data?.data?.pagination?.totalItems === 0 ? (
-                    <Text
-                      style={{
-                        textAlign: 'center',
-                        marginTop: 8,
-                        fontSize: 24,
-                        fontWeight: '600',
-                      }}>
-                      END OF THE LIST
-                    </Text>
-                  ) : (
-                    !activeFilter && !isLoading && (
-                      <TouchableOpacity
-                        onPress={loadMore}
+              !isSearchActive ? (
+                // !isFilterActive &&
+                isFetching ? (
+                  <View style={{height: 100}}>
+                    <ActivityIndicator size="small" color="#FF3130" />
+                  </View>
+                ) : (
+                  <View style={{height: 140}}>
+                    {data?.data?.pagination?.totalItems === 0 ? (
+                      <Text
                         style={{
-                          width: width * 0.4,
-                          backgroundColor: 'black',
-                          padding: 12,
-                          alignSelf: 'center',
-                          marginTop: 16,
-                          borderRadius: 16,
+                          textAlign: 'center',
+                          marginTop: 8,
+                          fontSize: 24,
+                          fontWeight: '600',
                         }}>
-                        <Text
+                        END OF THE LIST
+                      </Text>
+                    ) : (
+                      !activeFilter &&
+                      !isLoading && (
+                        <TouchableOpacity
+                          onPress={loadMore}
                           style={{
-                            color: 'white',
-                            textAlign: 'center',
-                            fontSize: 20,
+                            width: width * 0.4,
+                            backgroundColor: 'black',
+                            padding: 12,
+                            alignSelf: 'center',
+                            marginTop: 16,
+                            borderRadius: 16,
                           }}>
-                          {isFetching ? 'Loading...' : 'Load More...'}
-                        </Text>
-                      </TouchableOpacity>
-                    )
-                  )}
-                </View>
-              ))
+                          <Text
+                            style={{
+                              color: 'white',
+                              textAlign: 'center',
+                              fontSize: 20,
+                            }}>
+                            {isFetching ? 'Loading...' : 'Load More...'}
+                          </Text>
+                        </TouchableOpacity>
+                      )
+                    )}
+                  </View>
+                )
+              ) : (
+                <View style={{height: 130, marginTop: 10}} />
+              )
             ) : (
               <View style={{height: 130, marginTop: 10}}>
-                {actionApplicable && !isFiltering ? <TouchableOpacity
-                  onPress={() => handlePress(activeFilter)}
-                  style={{
-                    width: width * 0.6,
-                    backgroundColor: '#FF3130',
-                    padding: 12,
-                    alignSelf: 'center',
-                    marginTop: 16,
-                    borderRadius: 16,
-                  }}>
-                  <Text
+                {actionApplicable && !isFiltering ? (
+                  <TouchableOpacity
+                    onPress={() => handlePress(activeFilter)}
                     style={{
-                      color: 'white',
-                      textAlign: 'center',
-                      fontSize: 20,
+                      width: width * 0.6,
+                      backgroundColor: '#FF3130',
+                      padding: 12,
+                      alignSelf: 'center',
+                      marginTop: 16,
+                      borderRadius: 16,
                     }}>
-                    Add Extra {activeFilter}
-                  </Text>
-                </TouchableOpacity> : null}
-                
+                    <Text
+                      style={{
+                        color: 'white',
+                        textAlign: 'center',
+                        fontSize: 20,
+                      }}>
+                      Add Extra {activeFilter}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             )
           }
@@ -476,17 +485,18 @@ const BottomSheetContent = ({closeBottomSheet, tag}) => {
 
       {formData?.menu?.numberOfItems[tag.toLowerCase()] > 0 ? (
         <View
-          style={{flexDirection: 'row', justifyContent: 'space-between',  width: width*0.8, marginHorizontal: "auto"}}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: width * 0.8,
+            marginHorizontal: 'auto',
+          }}
           className=" px-6 py-4">
-          <Text
-            className="rounded-2xl font-medium"
-            style={{fontSize: 22}}>
+          <Text className="rounded-2xl font-medium" style={{fontSize: 22}}>
             Total {tag}
           </Text>
 
-          <Text
-            className="rounded-2xl font-medium "
-            style={{fontSize: 22}}>
+          <Text className="rounded-2xl font-medium " style={{fontSize: 22}}>
             {formData?.menu?.numberOfItems[tag.toLowerCase()]}
           </Text>
         </View>

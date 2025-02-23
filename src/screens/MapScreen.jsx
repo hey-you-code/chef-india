@@ -22,11 +22,18 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Fonticons from 'react-native-vector-icons/FontAwesome6';
 import axios from 'axios';
 import {useDispatch, useSelector} from 'react-redux';
-import {moveToNextPage, setFormData} from '../features/slices/chefbookingSlice';
+import {
+  moveToNextPage,
+  resetMenu,
+  setFormData,
+} from '../features/slices/chefbookingSlice';
 import {useBottomSheet} from '../contexts/BottomSheetContext';
 import BottomSheet from '@gorhom/bottom-sheet';
+import {notify} from 'react-native-notificated';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
+
+const OPERATED_STATES = ['Assam', 'Telangana'];
 
 const MapScreen = ({navigation}) => {
   const {formData, currentPage} = useSelector(state => state.chefBooking);
@@ -41,9 +48,18 @@ const MapScreen = ({navigation}) => {
   const [region, setRegion] = useState({
     latitude: 37.78825,
     longitude: -122.4324,
-    latitudeDelta: 0.005,
-    longitudeDelta: 0.005,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
   });
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      dispatch(resetMenu());
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  const [fetchingCurrentLocation, setFetchingCurrentLocation] = useState(false);
 
   // New state for showing a loading indicator while the map is updating.
   // const [mapLoading, setMapLoading] = useState(false);
@@ -94,25 +110,37 @@ const MapScreen = ({navigation}) => {
       return;
     }
     // setMapLoading(true);
+    setFetchingCurrentLocation(true);
     Geolocation.getCurrentPosition(
       position => {
         const {latitude, longitude} = position.coords;
+        setFetchingCurrentLocation(false);
         console.log('current location', latitude, longitude);
         const newRegion = {
           latitude,
           longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
         };
         setRegion(newRegion);
         // Animate map to the new region
-        mapRef.current.animateToRegion(newRegion, 1000);
+        // Move the map to the user's location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          });
+        }
         // Wait a moment for the region to update
         // setTimeout(() => {
         //   // setMapLoading(false);
         // }, 1000);
       },
       error => {
+        setFetchingCurrentLocation(false);
+
         Alert.alert('Error', 'Could not fetch current location');
         console.error(error);
         // setMapLoading(false);
@@ -122,10 +150,6 @@ const MapScreen = ({navigation}) => {
   };
 
   // Update region when map stops moving (and turn off loading state)
-  const onRegionChangeComplete = newRegion => {
-    setRegion(newRegion);
-    // setMapLoading(false);
-  };
 
   // Fetch address details using Google Geocoding API (optional)
   const fetchAddressDetails = async (latitude, longitude) => {
@@ -143,27 +167,68 @@ const MapScreen = ({navigation}) => {
         const streetName =
           addressComponents.find(c => c.types.includes('route'))?.long_name ||
           '';
+        const locality =
+          addressComponents.find(c => c.types.includes('locality'))
+            ?.long_name || '';
+        const premise =
+          addressComponents.find(c => c.types.includes('premise'))?.long_name ||
+          '';
+        const sublocalityLevel2 =
+          addressComponents.find(c => c.types.includes('sublocality_level_2'))
+            ?.long_name || '';
+        const sublocalityLevel1 =
+          addressComponents.find(c => c.types.includes('sublocality_level_1'))
+            ?.long_name || '';
+        const district =
+          addressComponents.find(c =>
+            c.types.includes('administrative_area_level_3'),
+          )?.long_name || '';
         const city = addressComponents.find(c =>
           c.types.includes('locality'),
         )?.long_name;
         const state = addressComponents.find(c =>
           c.types.includes('administrative_area_level_1'),
         )?.long_name;
+        const country =
+          addressComponents.find(c => c.types.includes('country'))?.long_name ||
+          '';
         const postalCode = addressComponents.find(c =>
           c.types.includes('postal_code'),
         )?.long_name;
         const street = streetNumber
           ? `${streetNumber} ${streetName}`
           : streetName;
+
+        if (!OPERATED_STATES.includes(state)) {
+          notify('warning', {
+            params: {
+              description: 'Oops!,We are not here yet',
+              title: 'Available locations',
+            },
+            config: {
+              isNotch: true,
+              notificationPosition: 'center',
+              // animationConfig: "SlideInLeftSlideOutRight",
+              // duration: 200,
+            },
+          });
+        }
+
         dispatch(
           setFormData({
             field: 'customerLocation',
             value: {
+              premise,
+              locality,
+              sublocalityLevel2,
+              sublocalityLevel1,
               city,
+              district,
               state,
+              country,
               postalCode,
               location: {
-                locationName: street || region?.description,
+                locationName: street || region?.description || premise,
                 type: 'Point',
                 coordinates: [longitude, latitude],
               },
@@ -185,7 +250,7 @@ const MapScreen = ({navigation}) => {
     if (region?.latitude && region?.longitude) {
       fetchAddressDetails(region.latitude, region.longitude);
     }
-  }, [region]);
+  }, []);
 
   // useEffect(() => {
   //   return () => {
@@ -199,7 +264,14 @@ const MapScreen = ({navigation}) => {
     closeBottomSheet();
     console.log('formData: ', JSON.stringify(formData, null, 2));
     if (formData?.bookingType === 'special') {
-      navigation.navigate('UserDecision');
+      dispatch(setFormData({field: 'catering', value: false}));
+      navigation.navigate('UserMenu', {
+        actionApplicable: true,
+        menuType: 'special',
+        country: 'India',
+      });
+
+      // navigation.navigate('UserDecision');
       return;
     }
     navigation.navigate('Checkout');
@@ -227,6 +299,7 @@ const MapScreen = ({navigation}) => {
     <View style={styles.container}>
       <StatusBar translucent={true} barStyle="dark-content" />
       <View
+        className="space-x-4"
         style={{
           position: 'absolute',
           top: 50,
@@ -238,13 +311,14 @@ const MapScreen = ({navigation}) => {
         }}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
+          className="bg-black/80 rounded-full"
           style={{
             width: 40,
             height: 40,
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <Ionicons name="arrow-back" color={'black'} size={24} />
+          <Ionicons name="arrow-back" color={'white'} size={24} />
         </TouchableOpacity>
         <View style={{flex: 1}}>
           <Text style={{color: 'black', fontSize: 18}}>Confirm Location</Text>
@@ -311,7 +385,9 @@ const MapScreen = ({navigation}) => {
                   longitudeDelta: 0.005,
                 };
                 setRegion(newRegion);
-                mapRef.current.animateToRegion(newRegion, 1000);
+                if (mapRef.current) {
+                  mapRef.current.animateToRegion(newRegion, 1000);
+                }
               }
             } catch (error) {
               console.error(error);
@@ -351,60 +427,44 @@ const MapScreen = ({navigation}) => {
       {/* <View className="bg-white" style={styles.map} /> */}
       {/* Full Screen Map */}
       <MapView
-        liteMode={true}
+        initialRegion={region}
+        showsCompass={true}
+        mapType="standard"
         showsBuildings
         ref={mapRef}
         style={styles.map}
         provider={PROVIDER_GOOGLE}
-        initialRegion={region}
-        // region={region}
-        // onRegionChangeComplete={onRegionChangeComplete}
-        // onMapReady={() => setMapReady(true)}
-        // loadingEnabled={true}
+        onRegionChange={newRegion => setRegion(newRegion)}
+        onRegionChangeComplete={newRegion =>
+          fetchAddressDetails(newRegion.latitude, newRegion.longitude)
+        }
         loadingIndicatorColor="#FF3130"
         loadingBackgroundColor="#fff">
         <Marker
-          // image={require('../../assets/marker_pin.png')}
-          // draggable
           coordinate={{
             latitude: region.latitude,
             longitude: region.longitude,
           }}
           title="Current Location"
-          description="This is your location"
-          // onDragEnd={e => {
-          //   const newCoord = e.nativeEvent.coordinate;
-          //   setRegion({
-          //     ...region,
-          //     latitude: newCoord.latitude,
-          //     longitude: newCoord.longitude,
-          //   });
-          //   mapRef.current.animateToRegion({
-          //     ...region,
-          //     latitude: newCoord.latitude,
-          //     longitude: newCoord.longitude,
-          //   });
-          // }}
-        >
+          description="This is your location">
           <Image
             source={require('../../assets/marker_pin.png')}
             style={{width: 40, height: 40}}
-            // className="h-[30px] w-[30px]"
-            // resizeMode="cover"
           />
         </Marker>
-        {/* <Circle
+        <Circle
           center={{
             latitude: region.latitude,
             longitude: region.longitude,
           }}
-          radius={30}
+          radius={100}
           strokeColor="rgba(0,112,255,0.5)"
           fillColor="rgba(0,112,255,0.2)"
-        /> */}
+        />
       </MapView>
 
       {/* Use Current Location Button */}
+
       <TouchableOpacity
         onPress={getCurrentLocation}
         style={styles.currentLocationButton}>
@@ -415,7 +475,9 @@ const MapScreen = ({navigation}) => {
             color="#FF3130"
             style={{marginRight: 8}}
           />
-          <Text style={styles.currentLocationText}>Use Current Location</Text>
+          <Text style={styles.currentLocationText}>
+            {fetchingCurrentLocation ? 'loading...' : 'Use Current Location'}
+          </Text>
         </View>
       </TouchableOpacity>
 
@@ -423,38 +485,58 @@ const MapScreen = ({navigation}) => {
         <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
           {region.description
             ? region.description
-            : formData?.customerLocation?.location?.locationName ||
-              'Random Street'}
+            : formData?.customerLocation?.location?.locationName || ''}{' '}
+          {formData?.customerLocation?.sublocalityLevel2 ||
+            formData?.customerLocation?.sublocalityLevel1 ||
+            formData?.customerLocation?.locality ||
+            ''}
         </Text>
         <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
           {formData?.customerLocation?.city || ''}{' '}
           {formData?.customerLocation?.state || ''}{' '}
           {formData?.customerLocation?.postalCode || ''}
         </Text>
-        <TouchableOpacity
-          onPress={() => {
-            console.log('r1');
-            handlePress();
-          }}
-          style={{
-            marginTop: 16,
-            backgroundColor: '#FF3130',
-            paddingVertical: 14,
-            borderRadius: 16,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-          <Text style={{color: 'white', fontSize: 18, fontWeight: '500'}}>
-            Add more address details
-          </Text>
-          <Ionicons
-            name="chevron-forward-outline"
-            size={20}
-            color="white"
-            style={{marginLeft: 8}}
-          />
-        </TouchableOpacity>
+        {!OPERATED_STATES.includes(formData?.customerLocation?.state) ? (
+          <View
+            style={{
+              marginTop: 16,
+              backgroundColor: '#FF3130',
+              paddingVertical: 14,
+              borderRadius: 16,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Text style={{color: 'white', fontSize: 18, fontWeight: '500'}}>
+              Oops we are not here yet!
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => {
+              console.log('r1');
+              handlePress();
+            }}
+            style={{
+              marginTop: 16,
+              backgroundColor: '#FF3130',
+              paddingVertical: 14,
+              borderRadius: 16,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Text style={{color: 'white', fontSize: 18, fontWeight: '500'}}>
+              Add more address details
+            </Text>
+            <Ionicons
+              name="chevron-forward-outline"
+              size={20}
+              color="white"
+              style={{marginLeft: 8}}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -542,12 +624,12 @@ const BottomSheetContent = ({
   handleSaveAddress,
 }) => {
   const dispatch = useDispatch();
-  const { user } = useSelector(state => state.user);
-  const { formData } = useSelector(state => state.chefBooking);
+  const {user} = useSelector(state => state.user);
+  const {formData} = useSelector(state => state.chefBooking);
 
   // Validate that required fields in customerLocation and customerInfo are filled
   const checkValidation = () => {
-    const { customerLocation, customerInfo } = formData;
+    const {customerLocation, customerInfo} = formData;
 
     // Validate customerLocation
     if (
@@ -614,7 +696,13 @@ const BottomSheetContent = ({
 
         <View className="relative flex-row items-center">
           <TextInput
-            value={formData?.customerLocation?.location?.locationName}
+            value={
+              formData?.customerLocation?.location?.locationName ||
+              formData?.customerLocation?.sublocalityLevel2 ||
+              formData?.customerLocation?.sublocalityLevel1 ||
+              formData?.customerLocation?.locality ||
+              ''
+            }
             onChangeText={text =>
               dispatch(
                 setFormData({
@@ -631,8 +719,7 @@ const BottomSheetContent = ({
           />
           <TouchableOpacity
             onPress={() => closeBottomSheet()}
-            className="absolute right-2 bg-red-500 rounded-lg px-4 py-2"
-          >
+            className="absolute right-2 bg-red-500 rounded-lg px-4 py-2">
             <Text className="text-white text-sm font-medium">Change</Text>
           </TouchableOpacity>
         </View>
@@ -644,7 +731,13 @@ const BottomSheetContent = ({
         <TextInput
           value={formData?.customerInfo?.name}
           onChangeText={text =>
-            dispatch(setFormData({ field: 'customerInfo', subfield: 'name', value: text }))
+            dispatch(
+              setFormData({
+                field: 'customerInfo',
+                subfield: 'name',
+                value: text,
+              }),
+            )
           }
           placeholder="Your Name"
           placeholderTextColor="#888"
@@ -654,7 +747,13 @@ const BottomSheetContent = ({
         <TextInput
           value={formData?.customerInfo?.phoneNumber}
           onChangeText={text =>
-            dispatch(setFormData({ field: 'customerInfo', subfield: 'phoneNumber', value: text }))
+            dispatch(
+              setFormData({
+                field: 'customerInfo',
+                subfield: 'phoneNumber',
+                value: text,
+              }),
+            )
           }
           placeholder="Phone Number"
           keyboardType="phone-pad"
@@ -673,12 +772,9 @@ const BottomSheetContent = ({
         }}
         className={`mt-6 py-4 rounded-2xl items-center shadow-md ${
           checkValidation() ? 'bg-red-500' : 'bg-red-500/60'
-        }`}
-      >
+        }`}>
         <Text className="text-white text-lg font-semibold">Save Address</Text>
       </TouchableOpacity>
     </View>
   );
 };
-
-

@@ -127,6 +127,7 @@ const Router = () => {
             <AppStack />
           </BottomSheetProvider>
         </NavigationContainer>
+
       </NotificationsProvider>
     </GestureHandlerRootView>
   );

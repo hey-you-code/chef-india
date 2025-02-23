@@ -13,9 +13,9 @@ import DateTimeSelector from '../../utils/DateTimeSelector';
 import WhosComingComponent from './WhosComingComponent';
 import WhatComponent from './WhatComponent';
 import {useSelector} from 'react-redux';
-import {createNotifications} from 'react-native-notificated';
+// import {createNotifications} from 'react-native-notificated';
 
-const {useNotifications} = createNotifications();
+// const {useNotifications} = createNotifications();
 
 const {height: screenHeight, width: screenWidth} = Dimensions.get('window');
 
@@ -31,7 +31,7 @@ const DummyComponent = () => {
 const FirstPage = ({navigation}) => {
   const {formData} = useSelector(state => state.chefBooking);
 
-  const {notify} = useNotifications();
+  // const {notify} = useNotifications();
 
   // Set initial heights:
   // - "When" is initially expanded
@@ -120,7 +120,7 @@ const FirstPage = ({navigation}) => {
       return true;
     }
 
-    if (formData?.bookingType === 'special') {
+    if (formData?.bookingType === 'special' || formData?.bookingType === 'catering' ) {
       if (formData?.eventType) {
         return true;
       }
@@ -158,18 +158,18 @@ const FirstPage = ({navigation}) => {
       !checkIfWhatComponentValid ||
       !checkIfWhenComponentValid
     ) {
-      notify('error', {
-        params: {
-          description: 'Fill all the values ',
-          title: 'Validations',
-        },
-        config: {
-          isNotch: true,
-          // notificationPosition: 'center',
-          // animationConfig: "SlideInLeftSlideOutRight",
-          // duration: 200,
-        },
-      });
+      // notify('error', {
+      //   params: {
+      //     description: 'Fill all the values ',
+      //     title: 'Validations',
+      //   },
+      //   config: {
+      //     isNotch: true,
+      //     // notificationPosition: 'center',
+      //     // animationConfig: "SlideInLeftSlideOutRight",
+      //     // duration: 200,
+      //   },
+      // });
       return;
     }
   };
@@ -244,22 +244,25 @@ const FirstPage = ({navigation}) => {
         onPress={() => {
           if (!checkValidation()) {
             // if(!checkIfWhoComponentValid()) {
-            notify('error', {
-              params: {
-                description: 'Fill the missing values',
-                title: 'Missing Fields',
-              },
-              config: {
-                isNotch: true,
-                // notificationPosition: 'center',
-                // animationConfig: "SlideInLeftSlideOutRight",
-                // duration: 200,
-              },
-            });
+            // notify('error', {
+            //   params: {
+            //     description: 'Fill the missing values',
+            //     title: 'Missing Fields',
+            //   },
+            //   config: {
+            //     isNotch: true,
+            //     // notificationPosition: 'center',
+            //     // animationConfig: "SlideInLeftSlideOutRight",
+            //     // duration: 200,
+            //   },
+            // });
             return;
             // }
           }
-
+          if (formData?.bookingType === 'catering') {
+            navigation.navigate('Catering');
+            return;
+          }
           navigation.navigate('Map');
         }}
         style={{

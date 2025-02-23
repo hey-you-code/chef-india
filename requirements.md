@@ -84,3 +84,27 @@ TODO:
     TEXT BASED EXP ===> WRITE THEIR PHONE NUMBER
 
     CHEF2 ===> 
+
+
+SPECIAL   
+
+ANNIVAERSAY / MARRIAGES / BIRTHDAY PARTIES ....
+
+EITHER
+
+SELECT MENU   
+
+
+
+personal
+
+extra item added will be discussed with the chef later
+
+change the name
+
+explore menu
+
+
+donatation 10rs for needy one
+(description)
+

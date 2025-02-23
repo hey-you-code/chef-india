@@ -14,6 +14,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import SecondPage from '../components/ChefBooking/SecondPage';
 import {
   moveToPreviousPage,
+  resetBookingType,
   resetFormData,
 } from '../features/slices/chefbookingSlice';
 import Menu from '../components/Menu/Menu';
@@ -47,7 +48,7 @@ const RegularBookingScreen = ({navigation}) => {
             className=""
             onPress={() => {
               navigation.goBack();
-              dispatch(resetFormData());
+              // setTimeout(() => dispatch(resetFormData()), 0); 
             }}>
             <Ionicons name="close-circle" size={30} color="#6b7280" />
           </TouchableOpacity>

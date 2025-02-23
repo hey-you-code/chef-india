@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,16 @@ import {
   StatusBar,
   ScrollView,
   Dimensions,
+  StyleSheet,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
 import RazorpayCheckout from 'react-native-razorpay';
 import axios from 'axios';
+import {useBookChefMutation} from '../features/chefBook/chefBookingApiSlice';
+import {createNotifications, notify} from 'react-native-notificated';
+import LottieView from 'lottie-react-native';
+import loading_animation from '../../assets/animation/loading_animation.json';
 
 // NativeWind allows us to use "className" for styling (ensure it is configured properly)
 const {width: WIDTH} = Dimensions.get('window');
@@ -18,6 +23,7 @@ const {width: WIDTH} = Dimensions.get('window');
 const CheckoutScreen = ({navigation}) => {
   // Get booking details from Redux. Here we assume formData is an array.
   const {formData} = useSelector(state => state.chefBooking);
+  const [initiatingPayment, setInitiatingPayment] = useState(false);
   const booking = Array.isArray(formData) ? formData[0] : formData;
 
   if (!booking) {
@@ -77,9 +83,19 @@ const CheckoutScreen = ({navigation}) => {
   const processingFee = Math.ceil(baseCost * 0.1);
   const totalAmount = baseCost + processingFee;
 
+  const [
+    bookChef,
+    {
+      isLoading: isBookingChef,
+      isError: isBookingError,
+      isSuccess: isBookingDone,
+    },
+  ] = useBookChefMutation();
+
   const handlePayment = async () => {
     try {
       // create Order
+      setInitiatingPayment(true);
       const response = await axios.post(
         'https://admin.cheffindia.com/api/v1/admin/payment/createOrder',
         // 'http://10.0.2.2:9100/api/v1/auth/chef/createOrder',
@@ -90,7 +106,7 @@ const CheckoutScreen = ({navigation}) => {
       );
 
       // const data = response?.data;
-
+      setInitiatingPayment(false);
       console.log('data: ', response?.data?.data?.order);
 
       const order = response?.data?.data?.order;
@@ -101,7 +117,7 @@ const CheckoutScreen = ({navigation}) => {
         currency: 'INR',
         key: 'rzp_live_FZbdnnMty8PClJ',
         amount: order.amount,
-        name: 'Cheff India',
+        name: 'Chef India',
         order_id: order.id, //Replace this with an order_id created using Orders API.
         prefill: {
           email: 'indiacheff@gmail.com',
@@ -123,91 +139,199 @@ const CheckoutScreen = ({navigation}) => {
                 razorpay_payment_id: data.razorpay_payment_id,
                 razorpay_signature: data.razorpay_signature,
               },
+              ...formData,
             },
           );
 
           console.log('Verification Response: ', verifyResponse.data);
 
           if (verifyResponse.data.success) {
+            navigation.navigate('BookingConfirmation');
             // alert('Payment verified successfully!');
-            dispatch(
-              setUser({
-                user: verifyResponse?.data?.data?.user,
-                accessToken: verifyResponse?.data?.data?.accessToken,
-              }),
-            );
+            // dispatch(
+            //   setUser({
+            //     user: verifyResponse?.data?.data?.user,
+            //     accessToken: verifyResponse?.data?.data?.accessToken,
+            //   }),
+            // );
           } else {
-            alert('Payment verification failed!');
+            notify('error', {
+              params: {
+                description: 'Payment Verification Failed',
+                title: 'Payment Verification',
+              },
+              config: {
+                isNotch: true,
+                notificationPosition: 'center',
+                // animationConfig: "SlideInLeftSlideOutRight",
+                // duration: 200,
+              },
+            });
           }
         })
         .catch(error => {
-          // handle failure
-          console.error('Payment Error: ', error);
-          alert('Payment Failed');
+          setInitiatingPayment(false);
+          notify('error', {
+            params: {
+              description: 'Payment Failed',
+              title: 'Payment',
+            },
+            config: {
+              isNotch: true,
+              notificationPosition: 'center',
+              // animationConfig: "SlideInLeftSlideOutRight",
+              // duration: 200,
+            },
+          });
         });
     } catch (error) {
       console.log('Something went wrong while payment', error);
     }
   };
 
+  console.log('data to be sent: ', JSON.stringify(formData, null, 2));
+
+  // const handleDummyPayment = async () => {
+  //   try {
+  //     console.log('Request started...');
+
+  //     const response = await bookChef({...formData}).unwrap();
+
+  //     console.log('Booking Successful!', response);
+
+  //     if (response?.success) {
+  //       navigation.navigate('BookingConfirmation');
+  //     }
+  //   } catch (error) {
+  //     console.log(
+  //       'Booking Failed:',
+  //       error?.data?.data || error?.message || error,
+  //     );
+  //     notify('error', {
+  //       params: {
+  //         description: 'No Chefs available.',
+  //         title: 'Available Chefs',
+  //         style: {
+  //           multiline: 3,
+  //         },
+  //       },
+  //       config: {
+  //         isNotch: true,
+
+  //         // notificationPosition: 'center',
+  //         // animationConfig: "SlideInLeftSlideOutRight",
+  //         // duration: 200,
+  //       },
+  //     });
+  //   }
+  // };
+
   return (
     <View className="flex-1 bg-white relative">
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      {/* Header */}
-      <View className="flex-row items-center px-4 pt-12 pb-2">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={30} color="black" />
-        </TouchableOpacity>
-        <Text className="ml-3 text-2xl font-semibold text-black">Checkout</Text>
-      </View>
-
-      <ScrollView contentContainerStyle={{paddingBottom: 120}} className="px-4">
-        <Text className="text-xl font-bold text-gray-800 my-4">
-          Cost Breakdown
-        </Text>
-        {breakdown.map((item, index) => (
-          <View
-            key={index}
-            className="flex-row justify-between border-b border-gray-300 py-2">
-            <Text className="text-base font-semibold text-gray-600">
-              {item.meal.charAt(0).toUpperCase() + item.meal.slice(1)}:
-            </Text>
-            <Text className="text-base text-gray-800">
-              ₹{item.mealPrice} x {item.numItems} x {item.guests} x {item.days}{' '}
-              = ₹{item.mealCost}
+      {initiatingPayment ? (
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <LottieView
+              source={loading_animation} // Use a Lottie loading animation
+              autoPlay
+              loop
+              style={styles.loadingAnimation}
+            />
+            <Text style={styles.loadingText}>Booking in progress...</Text>
+          </View>
+        </View>
+      ) : (
+        <>
+          <View className="flex-row items-center px-4 pt-12 pb-2">
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={30} color="black" />
+            </TouchableOpacity>
+            <Text className="ml-3 text-2xl font-semibold text-black">
+              Checkout
             </Text>
           </View>
-        ))}
-        <View className="flex-row justify-between border-b border-gray-300 py-2 mt-4">
-          <Text className="text-base font-semibold text-gray-600">
-            Base Cost:
-          </Text>
-          <Text className="text-base text-gray-800">₹{baseCost}</Text>
-        </View>
-        <View className="flex-row justify-between  py-2 mt-2">
-          <Text className="text-base font-semibold text-gray-600">
-            Processing Fee (10%):
-          </Text>
-          <Text className="text-base text-gray-800">₹{processingFee}</Text>
-        </View>
-        <View className="flex-row justify-between mt-4 pt-2 border-t border-gray-400">
-          <Text className="text-lg font-bold text-gray-900">Total Amount:</Text>
-          <Text className="text-lg font-bold text-gray-900">
-            ₹{totalAmount}
-          </Text>
-        </View>
-      </ScrollView>
 
-      {/* Floating Payment Button */}
-      <TouchableOpacity
-        onPress={handlePayment}
-        className="absolute bottom-6 left-4 right-4 bg-green-500 py-4 rounded-full flex-row items-center justify-center shadow-lg">
-        <Ionicons name="cart-outline" size={24} color="white" />
-        <Text className="ml-3 text-white text-lg font-bold">Pay Now</Text>
-      </TouchableOpacity>
+          <ScrollView
+            contentContainerStyle={{paddingBottom: 120}}
+            className="px-4">
+            <Text className="text-xl font-bold text-gray-800 my-4">
+              Cost Breakdown
+            </Text>
+            {breakdown.map((item, index) => (
+              <View
+                key={index}
+                className="flex-row justify-between border-b border-gray-300 py-2">
+                <Text className="text-base font-semibold text-gray-600">
+                  {item.meal.charAt(0).toUpperCase() + item.meal.slice(1)}:
+                </Text>
+                <Text className="text-base text-gray-800">
+                  ₹{item.mealPrice} x {item.numItems} x {item.guests} x{' '}
+                  {item.days} = ₹{item.mealCost}
+                </Text>
+              </View>
+            ))}
+            <View className="flex-row justify-between border-b border-gray-300 py-2 mt-4">
+              <Text className="text-base font-semibold text-gray-600">
+                Base Cost:
+              </Text>
+              <Text className="text-base text-gray-800">₹{baseCost}</Text>
+            </View>
+            <View className="flex-row justify-between  py-2 mt-2">
+              <Text className="text-base font-semibold text-gray-600">
+                Processing Fee (10%):
+              </Text>
+              <Text className="text-base text-gray-800">₹{processingFee}</Text>
+            </View>
+            <View className="flex-row justify-between mt-4 pt-2 border-t border-gray-400">
+              <Text className="text-lg font-bold text-gray-900">
+                Total Amount:
+              </Text>
+              <Text className="text-lg font-bold text-gray-900">
+                ₹{totalAmount}
+              </Text>
+            </View>
+          </ScrollView>
+
+          <TouchableOpacity
+            onPress={handlePayment}
+            className="absolute bottom-6 left-4 right-4 bg-green-500 py-4 rounded-full flex-row items-center justify-center shadow-lg">
+            <Ionicons name="cart-outline" size={24} color="white" />
+            <Text className="ml-3 text-white text-lg font-bold">
+              {isBookingChef
+                ? 'Booking...'
+                : isBookingDone
+                ? 'Booking Confirmed'
+                : 'Pay Now'}
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 };
 
 export default CheckoutScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingAnimation: {
+    width: 150,
+    height: 150,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 10,
+    color: 'gray',
+  },
+});

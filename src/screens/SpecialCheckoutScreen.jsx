@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,11 @@ import {useDispatch, useSelector} from 'react-redux';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import RazorpayCheckout from 'react-native-razorpay';
 import axios from 'axios';
-import { takeActionForMenuItems } from '../features/slices/chefbookingSlice';
+import {takeActionForMenuItems} from '../features/slices/chefbookingSlice';
+import {useBookChefMutation} from '../features/chefBook/chefBookingApiSlice';
+import LottieView from 'lottie-react-native';
+import loading_animation from '../../assets/animation/loading_animation.json';
+import {notify} from 'react-native-notificated';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
@@ -23,21 +27,36 @@ const SpecialCheckoutScreen = ({navigation}) => {
   // Retrieve the formData from your Redux store
   const {formData} = useSelector(state => state.chefBooking);
   const dispatch = useDispatch();
+  const [initiatingPayment, setInitiatingPayment] = useState(false);
   const {menu, bookingType, customerLocation, customerInfo, catering} =
     formData || {};
 
   const numberOfGuests = parseInt(formData?.numberOfGuests) || 1;
-  const numberOfDays =  1;
+  const numberOfDays = 1;
 
   // Count different categories
-  const numberOfStarters = menu?.numberOfItems['starters'] ? parseInt(menu?.numberOfItems['starters']) : 0
-  const numberOfMainCourse = menu?.numberOfItems['main course'] ? parseInt(menu?.numberOfItems['main course']) : 0
-  const numberOfDesserts = menu?.numberOfItems['desserts'] ? parseInt(menu?.numberOfItems['desserts']) : 0
-  const numberOfDrinks = menu?.numberOfItems['drinks'] ? parseInt(menu?.numberOfItems['drinks']) : 0
-  const numberOfSnacks = menu?.numberOfItems['snacks'] ?parseInt(menu?.numberOfItems['snacks']) : 0
+  const numberOfStarters = menu?.numberOfItems['starters']
+    ? parseInt(menu?.numberOfItems['starters'])
+    : 0;
+  const numberOfMainCourse = menu?.numberOfItems['main course']
+    ? parseInt(menu?.numberOfItems['main course'])
+    : 0;
+  const numberOfDesserts = menu?.numberOfItems['desserts']
+    ? parseInt(menu?.numberOfItems['desserts'])
+    : 0;
+  const numberOfDrinks = menu?.numberOfItems['drinks']
+    ? parseInt(menu?.numberOfItems['drinks'])
+    : 0;
+  // const numberOfSnacks = menu?.numberOfItems['snacks'] ?parseInt(menu?.numberOfItems['snacks']) : 0
 
   // Base prices
-  const basePrice = {starters: 20, mainCourse: 30, desserts: 20, drinks: 10,snacks: 10};
+  const basePrice = {starters: 4, mainCourse: 9, desserts: 4, drinks: 5};
+
+  const amountPerPerson =
+    numberOfStarters * basePrice.starters +
+    numberOfMainCourse * basePrice.mainCourse +
+    numberOfDesserts * basePrice.desserts +
+    numberOfDrinks * basePrice.drinks;
 
   // Calculate pricing when catering is false
   const startersTotal =
@@ -48,11 +67,12 @@ const SpecialCheckoutScreen = ({navigation}) => {
     numberOfDesserts * basePrice.desserts * numberOfGuests * numberOfDays;
   const drinksTotal =
     numberOfDrinks * basePrice.drinks * numberOfGuests * numberOfDays;
-    const snacksTotal = numberOfSnacks * numberOfGuests * numberOfDays;
+  // const snacksTotal = numberOfSnacks * numberOfGuests * numberOfDays;
   const totalAmountNonCatering =
-    startersTotal + mainCourseTotal + dessertsTotal + drinksTotal + snacksTotal;
-  const processingFeeNonCatering = totalAmountNonCatering * 0.1;
-  const finalTotalNonCatering = totalAmountNonCatering + processingFeeNonCatering;
+    startersTotal + mainCourseTotal + dessertsTotal + drinksTotal;
+  const processingFeeNonCatering = totalAmountNonCatering * 0.08;
+  const finalTotalNonCatering =
+    totalAmountNonCatering + processingFeeNonCatering;
 
   // Get the list of ordered items.
   const items = menu?.items || [];
@@ -66,22 +86,29 @@ const SpecialCheckoutScreen = ({navigation}) => {
     return sum + price;
   }, 0);
 
-  const processingFee = items.reduce((sum, item) => {
-    const price = parseFloat(item.itemPrice) || 0;
-    const quantity = parseInt(formData.numberOfGuests);
-    return sum + price * 0.1 * quantity;
-  }, 0);
+  // const processingFee = items.reduce((sum, item) => {
+  //   const price = parseFloat(item.itemPrice) || 0;
+  //   const quantity = parseInt(formData.numberOfGuests);
+  //   return sum + price * 0.08 * quantity;
+  // }, 0);
 
-  const totalAmount = items.reduce((sum, item) => {
+  const discount = '64.8%';
+
+  let totalAmount = items.reduce((sum, item) => {
     const price = parseFloat(item.itemPrice) || 0;
     const quantity = parseInt(formData.numberOfGuests);
     return sum + price * quantity;
   }, 0);
 
+  totalAmount = totalAmount * (1 - parseFloat(discount) / 100);
+
+  let processingFee = totalAmount * 0.08;
+
   const finalTotal = totalAmount + processingFee;
 
   const handlePayment = async () => {
     try {
+      setInitiatingPayment(true);
       // create Order
       const response = await axios.post(
         'https://admin.cheffindia.com/api/v1/admin/payment/createOrder',
@@ -93,6 +120,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
       );
 
       // const data = response?.data;
+      setInitiatingPayment(false);
 
       console.log('data: ', response?.data?.data?.order);
 
@@ -104,7 +132,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
         currency: 'INR',
         key: 'rzp_live_FZbdnnMty8PClJ',
         amount: order.amount,
-        name: 'Cheff India',
+        name: 'Chef India',
         order_id: order.id, //Replace this with an order_id created using Orders API.
         prefill: {
           email: 'indiacheff@gmail.com',
@@ -126,32 +154,104 @@ const SpecialCheckoutScreen = ({navigation}) => {
                 razorpay_payment_id: data.razorpay_payment_id,
                 razorpay_signature: data.razorpay_signature,
               },
+              ...formData,
             },
           );
 
           console.log('Verification Response: ', verifyResponse.data);
 
           if (verifyResponse.data.success) {
+            navigation.navigate('BookingConfirmation');
             // alert('Payment verified successfully!');
-            dispatch(
-              setUser({
-                user: verifyResponse?.data?.data?.user,
-                accessToken: verifyResponse?.data?.data?.accessToken,
-              }),
-            );
+            // dispatch(
+            //   setUser({
+            //     user: verifyResponse?.data?.data?.user,
+            //     accessToken: verifyResponse?.data?.data?.accessToken,
+            //   }),
+            // );
           } else {
-            alert('Payment verification failed!');
+            notify('error', {
+              params: {
+                description: 'Payment Verification Failed',
+                title: 'Payment Verification',
+              },
+              config: {
+                isNotch: true,
+                notificationPosition: 'center',
+                // animationConfig: "SlideInLeftSlideOutRight",
+                // duration: 200,
+              },
+            });
           }
         })
         .catch(error => {
           // handle failure
-          console.error('Payment Error: ', error);
-          alert('Payment Failed');
+          setInitiatingPayment(false);
+          notify('error', {
+            params: {
+              description: 'Payment Failed',
+              title: 'Payment',
+            },
+            config: {
+              isNotch: true,
+              notificationPosition: 'center',
+              // animationConfig: "SlideInLeftSlideOutRight",
+              // duration: 200,
+            },
+          });
+          // console.error('Payment Error: ', error);
+          // alert('Payment Failed');
         });
     } catch (error) {
       console.log('Something went wrong while payment', error);
     }
   };
+
+  const [
+    bookChef,
+    {
+      isLoading: isBookingChef,
+      isError: isBookingError,
+      isSuccess: isBookingDone,
+    },
+  ] = useBookChefMutation();
+
+  console.log('data to be sent: ', JSON.stringify(formData, null, 2));
+
+  // const handleDummyPayment = async () => {
+  //   try {
+  //     console.log('Request started...');
+
+  //     const response = await bookChef({...formData}).unwrap();
+
+  //     console.log('Booking Successful!', response);
+
+  //     if (response?.success) {
+  //       navigation.navigate('BookingConfirmation');
+  //     }
+  //   } catch (error) {
+  //     console.log(
+  //       'Booking Failed:',
+  //       error?.data?.data || error?.message || error,
+  //     );
+  //     notify('error', {
+  //       params: {
+  //         description: 'No Chefs available.',
+  //         title: 'Available Chefs',
+  //         style: {
+  //           multiline: 3,
+  //         },
+  //       },
+  //       config: {
+  //         isNotch: true,
+
+  //         // notificationPosition: 'center',
+  //         // animationConfig: "SlideInLeftSlideOutRight",
+  //         // duration: 200,
+  //       },
+  //     });
+  //   }
+  // };
 
   // Render each item in the list.
   const renderItem = ({item}) => {
@@ -167,18 +267,20 @@ const SpecialCheckoutScreen = ({navigation}) => {
           <Text style={styles.itemDescription}>{item.itemDescription}</Text>
           <View style={styles.priceQuantityRow}>
             <Text style={styles.itemPrice}>₹ {item.itemPrice}</Text>
-            <TouchableOpacity onPress={() => {
+            <TouchableOpacity
+              onPress={() => {
                 dispatch(
-                    takeActionForMenuItems({
-                      id: item?.id,
-                    }),
-                  );
+                  takeActionForMenuItems({
+                    id: item?.id,
+                  }),
+                );
 
-                  if(formData?.menu?.items.length === 1) {
-                    navigation.goBack();
-                  }
-            }} style={styles.itemQuantity}>
-                <Ionicons name='trash' color={"red"} size={24}/>
+                if (formData?.menu?.items.length === 1) {
+                  navigation.goBack();
+                }
+              }}
+              style={styles.itemQuantity}>
+              <Ionicons name="trash" color={'red'} size={24} />
             </TouchableOpacity>
           </View>
         </View>
@@ -206,87 +308,149 @@ const SpecialCheckoutScreen = ({navigation}) => {
           barStyle={'dark-content'}
         />
 
-        {/* Header */}
-        <View className="mx-2 flex-row space-x-2 mt-[50px] mb-[10px]">
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={30} color={'black'} />
-          </TouchableOpacity>
-          <Text className="text-2xl font-semibold text-black">Checkout</Text>
-        </View>
-        <ScrollView style={styles.container}>
-          {/* <Text style={styles.header}>Checkout</Text> */}
-
-          {catering === false ? (
-            <>
-              <View style={styles.summaryContainer}>
-                <Text className="text-[19px] font-semibold"> Starters</Text>
-                <Text style={styles.summaryAmount}>{numberOfStarters}</Text>
-              </View>
-              <View style={styles.summaryContainer}>
-                <Text className="text-[19px] font-semibold"> Main Course</Text>
-                <Text style={styles.summaryAmount}>{numberOfMainCourse}</Text>
-              </View>
-              <View style={styles.summaryContainer}>
-                <Text className="text-[19px] font-semibold"> Desserts</Text>
-                <Text style={styles.summaryAmount}>{numberOfDesserts}</Text>
-              </View>
-              <View style={styles.summaryContainer}>
-                <Text className="text-[19px] font-semibold"> Drinks</Text>
-                <Text style={styles.summaryAmount}>{numberOfDrinks}</Text>
-              </View>
-              <View style={styles.summaryContainer}>
+        {initiatingPayment ? (
+          <View style={styles.containerLoad}>
+            <View style={styles.loadingContainer}>
+              <LottieView
+                source={loading_animation} // Use a Lottie loading animation
+                autoPlay
+                loop
+                style={styles.loadingAnimation}
+              />
+              <Text style={styles.loadingText}>Payment Initiating...</Text>
+            </View>
+          </View>
+        ) : (
+          <>
+            <View className="mx-2 flex-row space-x-2 mt-[50px] mb-[10px]">
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Ionicons name="arrow-back" size={30} color={'black'} />
+              </TouchableOpacity>
+              <Text className="text-2xl font-semibold text-black">
+                Checkout
+              </Text>
+            </View>
+            <ScrollView style={styles.container}>
+              {catering === false ? (
+                <>
+                  <View style={styles.summaryContainer}>
+                    <Text className="text-[19px] font-semibold"> Starters</Text>
+                    <Text style={styles.summaryAmount}>{numberOfStarters}</Text>
+                  </View>
+                  <View style={styles.summaryContainer}>
+                    <Text className="text-[19px] font-semibold">
+                      {' '}
+                      Main Course
+                    </Text>
+                    <Text style={styles.summaryAmount}>
+                      {numberOfMainCourse}
+                    </Text>
+                  </View>
+                  <View style={styles.summaryContainer}>
+                    <Text className="text-[19px] font-semibold"> Desserts</Text>
+                    <Text style={styles.summaryAmount}>{numberOfDesserts}</Text>
+                  </View>
+                  <View style={styles.summaryContainer}>
+                    <Text className="text-[19px] font-semibold"> Drinks</Text>
+                    <Text style={styles.summaryAmount}>{numberOfDrinks}</Text>
+                  </View>
+                  {/* <View style={styles.summaryContainer}>
                 <Text className="text-[19px] font-semibold"> Drinks</Text>
                 <Text style={styles.summaryAmount}>{numberOfSnacks}</Text>
-              </View>
-              {/* <View style={styles.summaryContainer}>
+              </View> */}
+                  {/* <View style={styles.summaryContainer}>
                 <Text style={styles.summaryText}>Total Amount:</Text>
                 <Text style={styles.summaryAmount}>
                   ₹ {finalTotal.toFixed(2)}
                 </Text>
               </View> */}
-            </>
-          ) : (
-            <FlatList
-              data={items}
-              renderItem={renderItem}
-              removeClippedSubviews={false}
-              keyExtractor={item => item.id}
-              scrollEnabled={false}
-              contentContainerStyle={styles.listContainer}
-            />
-          )}
+                </>
+              ) : (
+                <FlatList
+                  data={items}
+                  renderItem={renderItem}
+                  removeClippedSubviews={false}
+                  keyExtractor={item => item.id}
+                  scrollEnabled={false}
+                  contentContainerStyle={styles.listContainer}
+                />
+              )}
 
-          {/* Order Summary */}
-          <View style={styles.summaryContainer}>
-            <Text className="text-[19px] font-semibold"> Amount</Text>
-            <Text style={styles.summaryAmount}>₹ {catering ? amount.toFixed(2) : totalAmountNonCatering.toFixed(2)}</Text>
-          </View>
-          <View style={styles.summaryContainer}>
-            <Text className="text-[19px] font-semibold"> Number of Guests</Text>
-            <Text style={styles.summaryAmount}>
-              {' '}
-              {formData?.numberOfGuests}
-            </Text>
-          </View>
-          <View style={styles.summaryContainer}>
-            <Text style={styles.summaryText}> Processing Fee(10%)</Text>
-            <Text style={styles.summaryAmount}>₹ {catering ? processingFee : processingFeeNonCatering}</Text>
-          </View>
-          <View style={styles.summaryContainer}>
-            <Text style={styles.summaryText}>Total Amount:</Text>
-            <Text style={styles.summaryAmount}>₹ {catering? finalTotal.toFixed(2) : finalTotalNonCatering.toFixed(2)}</Text>
-          </View>
+              {/* Order Summary */}
+              <View style={styles.summaryContainer}>
+                <Text className="text-[19px] font-semibold">Amount/person</Text>
+                <Text style={styles.summaryAmount}>
+                  ₹ {catering ? amount.toFixed(2) : amountPerPerson.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.summaryContainer}>
+                <Text className="text-[19px] font-semibold">
+                  Number of Guests
+                </Text>
+                <Text style={styles.summaryAmount}>
+                  {' '}
+                  {formData?.numberOfGuests}
+                </Text>
+              </View>
+              {catering && (
+                <View style={styles.summaryContainer}>
+                  <Text className="text-[20px] font-semibold">
+                    Discount
+                    <Text className="text-gray-600 text-sm font-normal">
+                      (First Order)
+                    </Text>
+                  </Text>
+                  <Text style={styles.summaryAmount}>
+                    {catering ? discount : 0}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryText}>Total Amount</Text>
+                <Text style={styles.summaryAmount}>
+                  ₹{' '}
+                  {catering
+                    ? totalAmount.toFixed(2)
+                    : totalAmountNonCatering.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryText}>Processing Fee(8%)</Text>
+                <Text style={styles.summaryAmount}>
+                  ₹{' '}
+                  {catering
+                    ? processingFee.toFixed(2)
+                    : processingFeeNonCatering.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.summaryContainer}>
+                <Text style={styles.summaryText}>Amount Payable</Text>
+                <Text style={styles.summaryAmount}>
+                  ₹{' '}
+                  {catering
+                    ? finalTotal.toFixed(2)
+                    : finalTotalNonCatering.toFixed(2)}
+                </Text>
+              </View>
 
-          {/* Pay Now Button */}
-          <TouchableOpacity
-            className="bg-green-500"
-            style={styles.payButton}
-            onPress={() => {
-              handlePayment();
-            }}>
-            <Text style={styles.payButtonText}>Pay Now</Text>
-          </TouchableOpacity>
-        </ScrollView>
+              {/* Pay Now Button */}
+              <TouchableOpacity
+                className="bg-green-500"
+                style={styles.payButton}
+                onPress={() => {
+                  // if (catering) {
+                  handlePayment();
+                  // return;
+                  // } else {
+                  //   handleDummyPayment();
+                  //   return;
+                  // }
+                }}>
+                <Text style={styles.payButtonText}>Pay Now</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </>
+        )}
       </ImageBackground>
     </View>
   );
@@ -297,6 +461,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 20,
+  },
+  containerLoad: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingAnimation: {
+    width: 150,
+    height: 150,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 10,
+    color: 'gray',
   },
   header: {
     fontSize: 28,

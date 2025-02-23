@@ -23,7 +23,7 @@ const MenuItem = ({
   const {formData} = useSelector(state => state.chefBooking);
 
   const getItemCount = id => {
-    const item = formData?.menu?.items.find(selected => selected.id === id);
+    const item = formData?.menu?.items?.find(selected => selected.id === id);
     return item ? item.itemCount : 0;
   };
 
@@ -31,8 +31,8 @@ const MenuItem = ({
 
   return (
     <View
-      style={{width: width * 0.99}}
-      className="max-w-md border-b  border-gray-300 py-4 mx-auto">
+      style={{}}
+      className=" border-b w-full  border-gray-300 py-4">
       <View
         style={{width: width * 0.95}}
         className={`h-[130px] mx-auto flex-row rounded-xl justify-between items-start`}>
@@ -40,14 +40,14 @@ const MenuItem = ({
           <Text className="text-left text-xl flex-wrap font-semibold tracking-tighter ">
             {name}
           </Text>
-          {!preview ? <Text className="text-lg font-medium">₨ {price}</Text> : <Text className="text-lg font-medium">₨ 10</Text>}
-          <Text numberOfLines={ 2} ellipsizeMode="tail" className="font-normal">
+          {!preview ? <Text className="text-lg font-medium">₨ {price}</Text> : <></>}
+          <Text numberOfLines={!preview ? 2 : 3} ellipsizeMode="tail" className="font-normal">
             {description}
           </Text>
         </View>
         <View className={` w-[35%]  items-center justify-center`}>
           <Image
-            className="aspect-square w-[100%] rounded-xl"
+            className="aspect-square md:max-h-[140px] w-[100%] rounded-xl"
             source={
               image
                 ? {

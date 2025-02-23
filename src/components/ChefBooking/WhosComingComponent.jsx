@@ -49,7 +49,7 @@ const WhosComingComponent = ({}) => {
             </TouchableOpacity>
           </View>
         ) : undefined}
-        {formData?.bookingType === 'special' ? (
+        {formData?.bookingType === 'special' || formData?.bookingType === 'catering' ? (
           <View style={styles.counterControls}>
             <TextInput
               onChangeText={text => {
@@ -58,7 +58,7 @@ const WhosComingComponent = ({}) => {
               // keyboardType="numeric"
               keyboardType='numeric'
               maxLength={5}
-              placeholder='500'
+              placeholder='Ex: 500'
               placeholderTextColor={"gray"}
               className="border px-4 rounded-xl w-[100px] text-black"
             />

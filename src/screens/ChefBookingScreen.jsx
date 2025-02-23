@@ -8,13 +8,14 @@ import {
   ImageBackground,
   Dimensions,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FirstPage from '../components/ChefBooking/FirstPage';
 import {useDispatch, useSelector} from 'react-redux';
 import SecondPage from '../components/ChefBooking/SecondPage';
 import {
   moveToPreviousPage,
+  resetFormData,
   setBookingType,
   setFormData,
 } from '../features/slices/chefbookingSlice';
@@ -39,6 +40,13 @@ const ChefBookingScreen = ({navigation}) => {
       </GestureHandlerRootView>
     );
   }
+
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener('focus', () => {
+  //     dispatch(resetFormData());
+  //   });
+  //   return unsubscribe;
+  // }, [navigation]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -78,7 +86,7 @@ const ChefBookingScreen = ({navigation}) => {
           {/* <Text className="px-2 py-4 text-2xl text-black/80 font-semibold tracking-tighter uppercase">
             TYPE OF BOOKING
           </Text> */}
-          <View className="w-[90vw] mx-auto space-y-6">
+          <View className="w-[90vw] mx-auto space-y-4">
             <View className="w-full mx-auto max-w-md flex-row justify-between">
               <TouchableOpacity
                 onPress={() => {
@@ -88,7 +96,7 @@ const ChefBookingScreen = ({navigation}) => {
                   navigation.navigate('RegularBooking');
                 }}
                 activeOpacity={0.5}
-                className="h-[250px] w-[47%] justify-center bg-black/60 rounded-2xl relative">
+                className="h-[250px] w-[48%] justify-center bg-black/60 rounded-2xl relative">
                 <View className="absolute w-full h-full rounded-2xl overflow-hidden">
                   <Image
                     className="h-full w-full"
@@ -125,7 +133,7 @@ const ChefBookingScreen = ({navigation}) => {
                   navigation.navigate('SpecialBooking');
                 }}
                 activeOpacity={0.5}
-                className="h-[250px] w-[47%] justify-center bg-black/60 rounded-2xl">
+                className="h-[250px] w-[48%] justify-center bg-black/60 rounded-2xl">
                 <View className="absolute w-full h-full rounded-2xl overflow-hidden">
                   <Image
                     className="h-full w-full"
@@ -155,13 +163,50 @@ const ChefBookingScreen = ({navigation}) => {
               </TouchableOpacity>
             </View>
 
-            <View>
+            <View className="w-full mx-auto max-w-md flex-row justify-between">
+              <TouchableOpacity
+                onPress={() => {
+                  dispatch(
+                    setFormData({field: 'bookingType', value: 'catering'}),
+                  );
+                  dispatch(setFormData({field: 'catering', value: true}));
+                  navigation.navigate('SpecialBooking');
+                }}
+                activeOpacity={0.5}
+                className="h-[250px] w-[48%] justify-center bg-black/60 rounded-2xl">
+                <View className="absolute w-full h-full rounded-2xl overflow-hidden">
+                  <Image
+                    className="h-full w-full"
+                    source={{
+                      uri: 'https://i.pinimg.com/736x/c1/ca/33/c1ca33bc3f210da47a80bdc3b61990e0.jpg',
+                    }}
+                  />
+                </View>
+
+                <View className="bg-black/50 space-y-4 h-full p-3 rounded-2xl">
+                  <Text className="text-white text-[28px] font-bold">
+                    Catering
+                  </Text>
+                  <Text className="text-gray-100 text-[18px] italic">
+                    Book catering services for your events
+                  </Text>
+
+                  {/* Updated View for Ionicons */}
+                  <View className="absolute bottom-4 items-end w-[98%]">
+                    <Ionicons
+                      name="arrow-forward-circle"
+                      color="white"
+                      size={45}
+                    />
+                  </View>
+                </View>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
                   navigation.navigate('BusinessBooking');
                 }}
                 activeOpacity={0.5}
-                className="h-[250px] w-[100%] justify-center bg-black/60 rounded-2xl relative">
+                className="h-[250px] w-[48%] justify-center bg-black/60 rounded-2xl relative">
                 <View className="absolute w-full h-full rounded-2xl overflow-hidden">
                   <Image
                     className="h-full w-full"
@@ -173,7 +218,7 @@ const ChefBookingScreen = ({navigation}) => {
 
                 <View className="bg-black/50 space-y-4 h-full p-3 rounded-2xl">
                   <Text className="text-white text-[28px] font-bold">
-                    Business Booking
+                    Business
                   </Text>
                   <Text className="text-gray-100 italic text-[18px]">
                     Hire Chefs for your business

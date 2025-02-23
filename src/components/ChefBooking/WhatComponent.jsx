@@ -78,7 +78,7 @@ const WhatComponent = ({onNext}) => {
   }
 
   // For "special" booking, show a grid with four options.
-  else if (bookingType === 'special') {
+  else if (bookingType === 'special' || bookingType === 'catering') {
     const specialOptions = ['Marriage', 'Birthday', 'Anniversary', 'Other'];
     const [selectedSpecial, setSelectedSpecial] = useState(null);
 
