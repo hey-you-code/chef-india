@@ -9,15 +9,15 @@ const Banner = () => {
   const images = [
     {
       id: '1',
-      uri: 'https://i.pinimg.com/736x/e7/49/0b/e7490bfb66cfe2183160e2f2a91729f5.jpg',
+      uri: 'https://i.pinimg.com/736x/20/98/13/209813e33c5f411ddfd49d98eef34c14.jpg',
     },
     {
       id: '2',
-      uri: 'https://i.pinimg.com/736x/51/62/2a/51622af9ae1b2a4e863a13be59e9694c.jpg',
+      uri: 'https://i.pinimg.com/736x/6a/59/fe/6a59fec3c73ddd85e97a12f4e1034a73.jpg',
     },
     {
       id: '3',
-      uri: 'https://i.pinimg.com/736x/9c/08/2d/9c082de5f9b12a95ac090e2053811953.jpg'
+      uri: 'https://i.pinimg.com/736x/ec/75/1f/ec751f453b9bd675a91ef0faaa8890fd.jpg'
     }
   ];
 
@@ -46,7 +46,7 @@ const Banner = () => {
   }, [activeIndex]);
 
   return (
-    <View className="mt-5   ">
+    <View className="mt-5">
       <FlatList
         ref={flatListRef}
         data={images}
@@ -62,7 +62,7 @@ const Banner = () => {
           >
             <Image
               source={{ uri: item.uri }}
-              className="h-[220px] w-[98%] rounded-xl mx-auto"
+              className="h-[180px] w-[98%] rounded-xl mx-auto object-cover"
             />
           </View>
         )}

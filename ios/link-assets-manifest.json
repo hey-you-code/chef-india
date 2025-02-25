@@ -4,6 +4,10 @@
     {
       "path": "assets/fonts/Anton.ttf",
       "sha1": "49243712633711db3b673d0b03536e0180cd7ddb"
+    },
+    {
+      "path": "assets/fonts/Roboto Regular.ttf",
+      "sha1": "6bd9646ab22c0301ce3adbfe8707213a67900404"
     }
   ]
 }

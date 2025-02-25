@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {useBookChefMutation} from '../features/chefBook/chefBookingApiSlice';
 import {createNotifications, notify} from 'react-native-notificated';
 import LottieView from 'lottie-react-native';
 import loading_animation from '../../assets/animation/loading_animation.json';
+import AddressPreview from '../components/AddressPreview';
 
 // NativeWind allows us to use "className" for styling (ensure it is configured properly)
 const {width: WIDTH} = Dimensions.get('window');
@@ -228,7 +229,7 @@ const CheckoutScreen = ({navigation}) => {
 
   return (
     <View className="flex-1 bg-white relative">
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar translucent={true} barStyle="dark-content" backgroundColor="transparent" />
 
       {initiatingPayment ? (
         <View style={styles.container}>
@@ -244,18 +245,23 @@ const CheckoutScreen = ({navigation}) => {
         </View>
       ) : (
         <>
-          <View className="flex-row items-center px-4 pt-12 pb-2">
+          <View  className="flex-row items-start px-4 pt-12 pb-2 bg-white">
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={30} color="black" />
             </TouchableOpacity>
-            <Text className="ml-3 text-2xl font-semibold text-black">
-              Checkout
-            </Text>
+            <View className="ml-3">
+              <Text
+                style={{fontFamily: 'Roboto Regular'}}
+                className="text-lg text-gray-400">
+                Checkout
+              </Text>
+              <AddressPreview navigation={navigation} />
+            </View>
           </View>
 
           <ScrollView
             contentContainerStyle={{paddingBottom: 120}}
-            className="px-4">
+            className="px-4 bg-gray-50">
             <Text className="text-xl font-bold text-gray-800 my-4">
               Cost Breakdown
             </Text>
@@ -296,7 +302,7 @@ const CheckoutScreen = ({navigation}) => {
 
           <TouchableOpacity
             onPress={handlePayment}
-            className="absolute bottom-6 left-4 right-4 bg-green-500 py-4 rounded-full flex-row items-center justify-center shadow-lg">
+            className="absolute bottom-6 left-4 right-4 bg-green-500 py-4 rounded-2xl flex-row items-center justify-center shadow-lg">
             <Ionicons name="cart-outline" size={24} color="white" />
             <Text className="ml-3 text-white text-lg font-bold">
               {isBookingChef

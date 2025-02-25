@@ -1,6 +1,6 @@
 import 'react-native-get-random-values';
 import {v4 as uuidv4} from 'uuid';
-import React, {useEffect, useState, useRef, useMemo} from 'react';
+import React, {useEffect, useState, useRef, useMemo, useCallback} from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,12 @@ import {
 import {useBottomSheet} from '../contexts/BottomSheetContext';
 import BottomSheet from '@gorhom/bottom-sheet';
 import {notify} from 'react-native-notificated';
+import {
+  fetchCurrentLocation,
+  reverseGeoCoding,
+} from '../utils/utilityFunctions';
+import {useUpdateAddressMutation} from '../features/auth/authApiSlice';
+import {setUser} from '../features/slices/userSlice';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
@@ -42,27 +48,39 @@ const MapScreen = ({navigation}) => {
   const {user} = useSelector(state => state.user);
   const dispatch = useDispatch();
 
-  console.log('currentPage: ', currentPage);
+  console.log('formData1: ', formData);
+
+  const {address} = user?.user;
+
+  // console.log("addressss:", address)
+
+  // console.log("formdata: ", formData?.customerLocation)
+
+  useEffect(() => {
+    dispatch(
+      setFormData({
+        field: 'customerLocation',
+        value: address,
+      }),
+    );
+  }, []);
 
   // Set a default initial region
   const [region, setRegion] = useState({
-    latitude: 37.78825,
-    longitude: -122.4324,
+    latitude: user?.user?.address?.location?.coordinates[1] || 37.78825,
+    longitude: user?.user?.address?.location?.coordinates[0] || -122.4324,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      dispatch(resetMenu());
-    });
-    return unsubscribe;
-  }, [navigation]);
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener('focus', () => {
+  //     dispatch(resetMenu());
+  //   });
+  //   return unsubscribe;
+  // }, [navigation]);
 
   const [fetchingCurrentLocation, setFetchingCurrentLocation] = useState(false);
-
-  // New state for showing a loading indicator while the map is updating.
-  // const [mapLoading, setMapLoading] = useState(false);
 
   // Bottom sheet ref using gorhom bottom sheet
   const bottomSheetRef = useRef(null);
@@ -81,158 +99,70 @@ const MapScreen = ({navigation}) => {
   // Reference for the MapView
   const mapRef = useRef(null);
 
-  // Request location permission (Android)
-  const requestLocationPermission = async () => {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Location Access Permission',
-          message: 'We need access to your location to provide this feature.',
-          buttonPositive: 'OK',
-        },
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    } catch (err) {
-      console.warn(err);
-      return false;
-    }
-  };
-
   // Get current location using Geolocation
   const getCurrentLocation = async () => {
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) {
-      Alert.alert(
-        'Permission Denied',
-        'Location permission is required to fetch the current location.',
-      );
-      return;
-    }
-    // setMapLoading(true);
-    setFetchingCurrentLocation(true);
-    Geolocation.getCurrentPosition(
-      position => {
-        const {latitude, longitude} = position.coords;
-        setFetchingCurrentLocation(false);
-        console.log('current location', latitude, longitude);
-        const newRegion = {
+    try {
+      setFetchingCurrentLocation(true);
+      const {latitude, longitude} = await fetchCurrentLocation();
+      setFetchingCurrentLocation(false);
+      if (!latitude && !longitude) {
+        notify('error', {
+          params: {
+            description: 'Failed to fetch location',
+            title: 'Current Locations',
+          },
+          config: {
+            isNotch: true,
+            notificationPosition: 'top',
+            // animationConfig: "SlideInLeftSlideOutRight",
+            // duration: 200,
+          },
+        });
+        return;
+      }
+      const newRegion = {
+        latitude,
+        longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      setRegion(newRegion);
+      // Animate map to the new region
+      // Move the map to the user's location
+      if (mapRef.current) {
+        mapRef.current.animateToRegion({
           latitude,
           longitude,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
-        };
-        setRegion(newRegion);
-        // Animate map to the new region
-        // Move the map to the user's location
-        if (mapRef.current) {
-          mapRef.current.animateToRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
-        }
-        // Wait a moment for the region to update
-        // setTimeout(() => {
-        //   // setMapLoading(false);
-        // }, 1000);
-      },
-      error => {
-        setFetchingCurrentLocation(false);
-
-        Alert.alert('Error', 'Could not fetch current location');
-        console.error(error);
-        // setMapLoading(false);
-      },
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-    );
+        });
+      }
+    } catch (error) {
+      setFetchingCurrentLocation(false);
+      notify('error', {
+        params: {
+          description: 'Failed to fetch location',
+          title: 'Current Locations',
+        },
+        config: {
+          isNotch: true,
+          notificationPosition: 'top',
+          // animationConfig: "SlideInLeftSlideOutRight",
+          // duration: 200,
+        },
+      });
+      return;
+    }
   };
-
-  // Update region when map stops moving (and turn off loading state)
-
   // Fetch address details using Google Geocoding API (optional)
   const fetchAddressDetails = async (latitude, longitude) => {
     try {
-      // setMapLoading(true);
-      const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`,
-      );
-      const results = response.data.results;
-      if (results.length > 0) {
-        const addressComponents = results[0].address_components;
-        const streetNumber =
-          addressComponents.find(c => c.types.includes('street_number'))
-            ?.long_name || '';
-        const streetName =
-          addressComponents.find(c => c.types.includes('route'))?.long_name ||
-          '';
-        const locality =
-          addressComponents.find(c => c.types.includes('locality'))
-            ?.long_name || '';
-        const premise =
-          addressComponents.find(c => c.types.includes('premise'))?.long_name ||
-          '';
-        const sublocalityLevel2 =
-          addressComponents.find(c => c.types.includes('sublocality_level_2'))
-            ?.long_name || '';
-        const sublocalityLevel1 =
-          addressComponents.find(c => c.types.includes('sublocality_level_1'))
-            ?.long_name || '';
-        const district =
-          addressComponents.find(c =>
-            c.types.includes('administrative_area_level_3'),
-          )?.long_name || '';
-        const city = addressComponents.find(c =>
-          c.types.includes('locality'),
-        )?.long_name;
-        const state = addressComponents.find(c =>
-          c.types.includes('administrative_area_level_1'),
-        )?.long_name;
-        const country =
-          addressComponents.find(c => c.types.includes('country'))?.long_name ||
-          '';
-        const postalCode = addressComponents.find(c =>
-          c.types.includes('postal_code'),
-        )?.long_name;
-        const street = streetNumber
-          ? `${streetNumber} ${streetName}`
-          : streetName;
-
-        if (!OPERATED_STATES.includes(state)) {
-          notify('warning', {
-            params: {
-              description: 'Oops!,We are not here yet',
-              title: 'Available locations',
-            },
-            config: {
-              isNotch: true,
-              notificationPosition: 'center',
-              // animationConfig: "SlideInLeftSlideOutRight",
-              // duration: 200,
-            },
-          });
-        }
-
+      const {address} = await reverseGeoCoding(latitude, longitude);
+      if (address) {
         dispatch(
           setFormData({
             field: 'customerLocation',
-            value: {
-              premise,
-              locality,
-              sublocalityLevel2,
-              sublocalityLevel1,
-              city,
-              district,
-              state,
-              country,
-              postalCode,
-              location: {
-                locationName: street || region?.description || premise,
-                type: 'Point',
-                coordinates: [longitude, latitude],
-              },
-            },
+            value: address,
           }),
         );
       } else {
@@ -247,53 +177,43 @@ const MapScreen = ({navigation}) => {
   };
 
   useEffect(() => {
-    if (region?.latitude && region?.longitude) {
-      fetchAddressDetails(region.latitude, region.longitude);
+    // if (region?.latitude && region?.longitude) {
+    //   fetchAddressDetails(region.latitude, region.longitude);
+    // }
+    if (!user?.user?.address) {
+      getCurrentLocation();
     }
-  }, []);
+  }, [user]);
 
-  // useEffect(() => {
-  //   return () => {
-  //     // Cleanup any pending API requests
-  //     setMapLoading(false);
-  //   };
-  // }, []);
+  const [updateAddress, {isLoading: isUpdatingAddress}] =
+    useUpdateAddressMutation();
 
-  // Handler for saving the additional address details from bottom sheet
-  const handleSaveAddress = () => {
+  // console.log('finalFormData: ', formData?.customerLocation?.houseNumber);
+
+  // console.log(
+  //   'formData: ',
+  //   JSON.stringify(formData?.customerLocation?.houseNumber, null, 2),
+  // );
+  const handleNavigation = () => {
     closeBottomSheet();
-    console.log('formData: ', JSON.stringify(formData, null, 2));
-    if (formData?.bookingType === 'special') {
-      dispatch(setFormData({field: 'catering', value: false}));
-      navigation.navigate('UserMenu', {
-        actionApplicable: true,
-        menuType: 'special',
-        country: 'India',
-      });
-
-      // navigation.navigate('UserDecision');
-      return;
-    }
-    navigation.navigate('Checkout');
+    navigation.goBack();
   };
 
   const handlePress = () => {
     openBottomSheet(
       <BottomSheetContent
+        handleNavigation={handleNavigation}
         addressType={addressType}
         setAddressType={setAddressType}
         formData={formData}
         user={user}
         dispatch={dispatch}
         closeBottomSheet={closeBottomSheet}
-        handleSaveAddress={handleSaveAddress}
       />,
       ['25%', '75%'],
-      'EDITPROFILE',
+      'MAPSCREEN',
     );
   };
-
-  console.log('finalFormData: ', formData);
 
   return (
     <View style={styles.container}>
@@ -482,20 +402,37 @@ const MapScreen = ({navigation}) => {
       </TouchableOpacity>
 
       <View style={styles.addressDetailsContainer}>
-        <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
-          {region.description
-            ? region.description
-            : formData?.customerLocation?.location?.locationName || ''}{' '}
-          {formData?.customerLocation?.sublocalityLevel2 ||
-            formData?.customerLocation?.sublocalityLevel1 ||
-            formData?.customerLocation?.locality ||
-            ''}
-        </Text>
-        <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
-          {formData?.customerLocation?.city || ''}{' '}
-          {formData?.customerLocation?.state || ''}{' '}
-          {formData?.customerLocation?.postalCode || ''}
-        </Text>
+        {formData?.customerLocation ? (
+          <>
+            <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
+              {region.description
+                ? region.description
+                : formData?.customerLocation?.location?.locationName || ''}{' '}
+              {formData?.customerLocation?.sublocalityLevel2 ||
+                formData?.customerLocation?.sublocalityLevel1 ||
+                formData?.customerLocation?.locality ||
+                ''}
+            </Text>
+            <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
+              {formData?.customerLocation?.city || ''}{' '}
+              {formData?.customerLocation?.state || ''}{' '}
+              {formData?.customerLocation?.postalCode || ''}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
+              {address?.sublocalityLevel2 ||
+                address?.sublocalityLevel1 ||
+                address?.locality ||
+                ''}
+            </Text>
+            <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
+              {address?.city || ''} {address?.state || ''}{' '}
+              {address?.postalCode || ''}
+            </Text>
+          </>
+        )}
         {!OPERATED_STATES.includes(formData?.customerLocation?.state) ? (
           <View
             style={{
@@ -621,15 +558,19 @@ const BottomSheetContent = ({
   addressType,
   setAddressType,
   closeBottomSheet,
-  handleSaveAddress,
+  handleNavigation,
 }) => {
   const dispatch = useDispatch();
   const {user} = useSelector(state => state.user);
   const {formData} = useSelector(state => state.chefBooking);
 
+  // console.log('houseNumber: ', formData?.customerLocation?.houseNumber);
+
   // Validate that required fields in customerLocation and customerInfo are filled
   const checkValidation = () => {
     const {customerLocation, customerInfo} = formData;
+
+    // console.log("houseNu")
 
     // Validate customerLocation
     if (
@@ -667,8 +608,54 @@ const BottomSheetContent = ({
           },
         }),
       );
+
+      // dispatch(setFormData({
+      //   field
+      // }))
     }
   }, [dispatch, user]);
+
+  const [updateAddress, {isLoading: isUpdatingAddress}] =
+    useUpdateAddressMutation();
+
+  const handleSaveAddress = async () => {
+    const updatedLocation = formData?.customerLocation;
+
+    try {
+      const response = await updateAddress(updatedLocation).unwrap();
+
+      dispatch(
+        setUser({
+          ...user,
+          user: response?.data?.user,
+        }),
+      );
+
+      dispatch(
+        setFormData({
+          field: 'customerLocation',
+          value: response?.data?.user?.address,
+        }),
+      );
+
+      handleNavigation();
+    } catch (error) {
+      console.log('error: ', error);
+    }
+
+    // if (formData?.bookingType === 'special') {
+    //   dispatch(setFormData({field: 'catering', value: false}));
+    //   navigation.navigate('UserMenu', {
+    //     actionApplicable: true,
+    //     menuType: 'special',
+    //     country: 'India',
+    //   });
+
+    //   // navigation.navigate('UserDecision');
+    //   return;
+    // }
+    // navigation.goBack();
+  };
 
   return (
     <View className="flex-1 p-5 bg-white">
@@ -773,7 +760,9 @@ const BottomSheetContent = ({
         className={`mt-6 py-4 rounded-2xl items-center shadow-md ${
           checkValidation() ? 'bg-red-500' : 'bg-red-500/60'
         }`}>
-        <Text className="text-white text-lg font-semibold">Save Address</Text>
+        <Text className="text-white text-lg font-semibold">
+          {isUpdatingAddress ? 'Saving...' : 'Save Address'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

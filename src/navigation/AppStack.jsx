@@ -162,7 +162,7 @@ const AppStack = () => {
       <Stack.Screen
         name="Map"
         component={MapScreen}
-        options={{headerShown: false, animation: 'slide_from_right'}}
+        options={{headerShown: false, animation: 'slide_from_bottom'}}
       />
       <Stack.Screen
         name="SpecificMenu"

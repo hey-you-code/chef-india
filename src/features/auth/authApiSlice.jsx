@@ -1,7 +1,7 @@
 import { apiSlice } from "../api/apiSlice";
 
-//  const BASE_URL = "http://10.0.2.2:9100/api/v1/auth/user";
-const BASE_URL = 'https://auth.cheffindia.com/api/v1/auth/user';
+ const BASE_URL = "http://10.0.2.2:9100/api/v1/auth/user";
+// const BASE_URL = 'https://auth.cheffindia.com/api/v1/auth/user';
 
 export const authApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -58,6 +58,17 @@ export const authApiSlice = apiSlice.injectEndpoints({
         },
       }),
     }),
+
+    updateAddress: builder.mutation({
+      query: (payload) => ({
+        url: `${BASE_URL}/address`,
+        method: "POST",
+        body:  payload ,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+    })
   }),
 });
 
@@ -68,4 +79,5 @@ export const {
   useRefreshAccessTokenMutation,
   useLogoutMutation,
   useStoreFcmTokenMutation,
+  useUpdateAddressMutation,
 } = authApiSlice;

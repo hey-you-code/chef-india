@@ -31,6 +31,8 @@ const DummyComponent = () => {
 const FirstPage = ({navigation}) => {
   const {formData} = useSelector(state => state.chefBooking);
 
+  console.log("formData: ", formData);
+
   // const {notify} = useNotifications();
 
   // Set initial heights:
@@ -120,7 +122,10 @@ const FirstPage = ({navigation}) => {
       return true;
     }
 
-    if (formData?.bookingType === 'special' || formData?.bookingType === 'catering' ) {
+    if (
+      formData?.bookingType === 'special' ||
+      formData?.bookingType === 'catering'
+    ) {
       if (formData?.eventType) {
         return true;
       }
@@ -261,6 +266,11 @@ const FirstPage = ({navigation}) => {
           }
           if (formData?.bookingType === 'catering') {
             navigation.navigate('Catering');
+            return;
+          }
+
+          if (formData?.bookingType === 'regular') {
+            navigation.navigate('Checkout');
             return;
           }
           navigation.navigate('Map');

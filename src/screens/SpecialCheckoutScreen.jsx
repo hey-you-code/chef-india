@@ -20,6 +20,7 @@ import {useBookChefMutation} from '../features/chefBook/chefBookingApiSlice';
 import LottieView from 'lottie-react-native';
 import loading_animation from '../../assets/animation/loading_animation.json';
 import {notify} from 'react-native-notificated';
+import AddressPreview from '../components/AddressPreview';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
@@ -322,13 +323,18 @@ const SpecialCheckoutScreen = ({navigation}) => {
           </View>
         ) : (
           <>
-            <View className="mx-2 flex-row space-x-2 mt-[50px] mb-[10px]">
+            <View className="flex-row items-start px-4 pt-12 pb-2 bg-white">
               <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Ionicons name="arrow-back" size={30} color={'black'} />
+                <Ionicons name="arrow-back" size={30} color="black" />
               </TouchableOpacity>
-              <Text className="text-2xl font-semibold text-black">
-                Checkout
-              </Text>
+              <View className="ml-3">
+                <Text
+                  style={{fontFamily: 'Roboto Regular'}}
+                  className="text-lg text-gray-400">
+                  Checkout
+                </Text>
+                <AddressPreview navigation={navigation} />
+              </View>
             </View>
             <ScrollView style={styles.container}>
               {catering === false ? (

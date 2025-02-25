@@ -9,7 +9,7 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import bookchef from '../../assets/bookchef.png';
 import exploremenu from '../../assets/exploremenu.png';
@@ -20,16 +20,89 @@ import LinearGradient from 'react-native-linear-gradient';
 import logo from '../../assets/logo.png';
 import menu_tab from '../../assets/menu_tab.png';
 import {resetFormData} from '../features/slices/chefbookingSlice';
+import {useUpdateAddressMutation} from '../features/auth/authApiSlice';
+import {
+  reverseGeoCoding,
+  fetchCurrentLocation,
+} from '../utils/utilityFunctions';
+import {setUser} from '../features/slices/userSlice';
 
 const HomeScreen = ({navigation}) => {
   const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
   const {user} = useSelector(state => state.user);
+  const [fetchingCurrentLocation, setFetchingCurrentLocation] = useState(false);
 
   const dispatch = useDispatch();
 
   // useEffect(() => {
   //   dispatch(resetFormData());
   // }, []);
+
+  const [updateAddress, {isLoading: isUpdatingAddess}] =
+    useUpdateAddressMutation();
+
+  const getCurrentLocation = async () => {
+    try {
+      setFetchingCurrentLocation(true);
+      const {latitude, longitude} = await fetchCurrentLocation();
+      setFetchingCurrentLocation(false);
+      if (!latitude && !longitude) {
+        notify('error', {
+          params: {
+            description: 'Failed to fetch location',
+            title: 'Current Locations',
+          },
+          config: {
+            isNotch: true,
+            notificationPosition: 'top',
+            // animationConfig: "SlideInLeftSlideOutRight",
+            // duration: 200,
+          },
+        });
+        return null;
+      }
+
+      const {address} = await reverseGeoCoding(latitude, longitude);
+
+      if (!address) {
+        return null;
+      }
+
+      const response = await updateAddress(address).unwrap();
+
+      console.log('response: ', response?.data?.user);
+
+      dispatch(
+        setUser({
+          ...user,
+          user: response?.data?.user,
+        }),
+      );
+    } catch (error) {
+      setFetchingCurrentLocation(false);
+      notify('error', {
+        params: {
+          description: 'Failed to fetch location',
+          title: 'Current Locations',
+        },
+        config: {
+          isNotch: true,
+          notificationPosition: 'top',
+          // animationConfig: "SlideInLeftSlideOutRight",
+          // duration: 200,
+        },
+      });
+      return;
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.user?.address) {
+      getCurrentLocation();
+    }
+  }, [user]);
+
+  console.log('userrr: ', user);
 
   console.log('loggedInUser: ', user?.user?.name[0]);
   return (
@@ -61,14 +134,16 @@ const HomeScreen = ({navigation}) => {
         <View className="flex-row justify-between w-screen  items-center mt-[50px]">
           <View className="pl-2">
             {/* <Text className="text-3xl font-bold text-black">Cheff India</Text> */}
-            <Image source={logo} className="h-[40px] w-[180px]" />
+            <Image source={logo} className="h-[30px] w-[160px]" />
           </View>
           <TouchableOpacity
             onPress={() => navigation.navigate('Profile')}
-            className="px-2">
+            className="px-2 max-w-[80%]">
             {user ? (
               <View className="h-[40px] w-[40px]  bg-black/90 rounded-full items-center justify-center">
-                <Text className="text-[#FFF] text-center text-xl font-bold">
+                <Text
+                  ellipsizeMode="tail"
+                  className="text-[#FFF] text-center text-xl font-bold">
                   {user.user?.name[0]}
                 </Text>
               </View>
@@ -77,7 +152,66 @@ const HomeScreen = ({navigation}) => {
             )}
           </TouchableOpacity>
         </View>
-        <ScrollView className="flex-1">
+
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('Map');
+          }}
+          className="flex-row  items-start mx-2 my-2">
+          {user?.user?.address ? (
+            <View>
+              <Text
+                style={{fontFamily: 'Roboto Regular'}}
+                className="text-[16px] tracking-wide text-black font-bold ">
+                <View className="pr-[2px]">
+                  <Ionicons name="location-sharp" size={18} color={'red'} />
+                </View>
+                {user?.user?.address?.streetName ||
+                  user?.user?.address?.streetNumber ||
+                  user?.user?.address?.premise ||
+                  user?.user?.address?.sublocalityLevel2 ||
+                  user?.user?.address?.sublocalityLevel1 ||
+                  user?.user?.address?.location?.locationName ||
+                  ''}{' '}
+                {''}
+                {/* {user?.user?.address?.city || ''} */}
+                {/* {user?.user?.address?.state || ''}{' '} */}
+                {/* {user?.user?.address?.postalCode || ''} */}
+              </Text>
+              <Text
+                style={{fontFamily: 'Roboto Regular'}}
+                className="text-[13px] tracking-wide text-gray-500 text-left">
+                {/* {user?.user?.address?.streetName ||
+                  user?.user?.address?.streetNumber ||
+                  user?.user?.address?.premise ||
+                  user?.user?.address?.sublocalityLevel2 ||
+                  user?.user?.address?.sublocalityLevel1 ||
+                  user?.user?.address?.location?.locationName || 
+                  ''}{' '}
+                {''} */}
+                {user?.user?.address?.city || ''},
+                {user?.user?.address?.state || ''} ,
+                {user?.user?.address?.postalCode || ''} ,
+                {user?.user?.address?.country || ''}
+              </Text>
+            </View>
+          ) : fetchingCurrentLocation ? (
+            <Text
+              style={{fontFamily: 'Roboto Regular'}}
+              className="text-red-500">
+              Fetching...
+            </Text>
+          ) : (
+            <Text
+              style={{fontFamily: 'Roboto Regular'}}
+              className="text-gray-500">
+              Select Manually
+            </Text>
+          )}
+          <Ionicons name="chevron-down" size={20} color={'#9ca3af'} />
+        </TouchableOpacity>
+
+        <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
           <Banner />
 
           <View className="flex-1 mt-8">

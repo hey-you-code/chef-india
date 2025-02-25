@@ -26,7 +26,7 @@ const {height: HEIGHT, width: WIDTH} = Dimensions.get("window");
 
 
 const SpecialBookingScreen = ({navigation}) => {
-  const {currentPage} = useSelector(state => state.chefBooking);
+  const {currentPage, formData} = useSelector(state => state.chefBooking);
   const dispatch = useDispatch();
   return (
     <SafeAreaView className="flex-1 bg-white rounded-t-3xl">
@@ -59,7 +59,7 @@ const SpecialBookingScreen = ({navigation}) => {
             </TouchableOpacity>
             <View className="flex-1">
               <Text className="text-2xl font-semibold tracking-tighter text-center text-gray-500">
-                Special Booking
+                {formData.bookingType === "special" ?  "Special Booking" :  "Catering Booking" }
               </Text>
             </View>
             <View className="mx-2" />

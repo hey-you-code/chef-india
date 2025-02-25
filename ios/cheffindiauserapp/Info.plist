@@ -50,6 +50,7 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>Anton.ttf</string>
+		<string>Roboto Regular.ttf</string>
 	</array>
 </dict>
 </plist>

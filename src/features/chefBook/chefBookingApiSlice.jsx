@@ -8,15 +8,25 @@ export const chefBookingApiSlice = apiSlice.injectEndpoints({
     endpoints: builder => ({
         bookChef: builder.mutation({
             query: (payload) => ({
-                url: `${BASE_URL}`,
+                url: `${BASE_URL}/`,
                 method: "POST",
                 body: payload,
                 headers: {
                   "Content-Type": "application/json",
                 },
               }), 
+        }),
+        findCatering: builder.mutation({
+            query: (payload) => ({
+                url: `${BASE_URL}/catering`,
+                method: "POST",
+                body: payload,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+            })
         })
     })
 })
 
-export const {useBookChefMutation} = chefBookingApiSlice
+export const {useBookChefMutation, useFindCateringMutation} = chefBookingApiSlice
