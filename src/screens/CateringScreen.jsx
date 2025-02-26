@@ -190,7 +190,7 @@ const CateringScreen = ({navigation}) => {
     }
   }, []);
 
-  //   console.log('formData: ', formData);
+//   console.log('formData: ', formData);
   return (
     <View className="flex-1 bg-white">
       <StatusBar translucent={true} barStyle="dark-content" />
@@ -433,12 +433,7 @@ const CateringScreen = ({navigation}) => {
             </Text>
           </View>
           <BottomSheetScrollView showsVerticalScrollIndicator={false}>
-            <Caterer
-              name={"Vishal's Catering"}
-              distance={2000}
-              navigation={navigation}
-            />
-            {/* {availableCaterers.length > 0 ? (
+            {availableCaterers.length > 0 ? (
               availableCaterers.map(item => (
                 <Caterer
                   key={item?._id}
@@ -457,7 +452,7 @@ const CateringScreen = ({navigation}) => {
                   TRY CHANGING YOUR LOCATION
                 </Text>
               </View>
-            )} */}
+            )}
             <View style={{minHeight: HEIGHT / 2}} />
           </BottomSheetScrollView>
         </View>
