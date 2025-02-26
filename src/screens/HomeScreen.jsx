@@ -64,15 +64,13 @@ const HomeScreen = ({navigation}) => {
 
       const {address} = await reverseGeoCoding(latitude, longitude);
 
-      console.log("address:", address);
-
       if (!address) {
         return null;
       }
 
       const response = await updateAddress(address).unwrap();
 
-      // console.log('response: ', response?.data?.user);
+      console.log('response: ', response?.data?.user);
 
       dispatch(
         setUser({

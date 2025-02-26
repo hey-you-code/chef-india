@@ -227,7 +227,7 @@ const chefBookingSlice = createSlice({
     },
 
     resetFormData: state => {
-      state.formData = initialState?.formData;
+      state.formData = JSON.parse(JSON.stringify(initialState.formData));
     },
   },
 });

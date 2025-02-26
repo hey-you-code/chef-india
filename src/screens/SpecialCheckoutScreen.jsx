@@ -219,40 +219,40 @@ const SpecialCheckoutScreen = ({navigation}) => {
 
   console.log('data to be sent: ', JSON.stringify(formData, null, 2));
 
-  const handleDummyPayment = async () => {
-    try {
-      console.log('Request started...');
+  // const handleDummyPayment = async () => {
+  //   try {
+  //     console.log('Request started...');
 
-      const response = await bookChef({...formData}).unwrap();
+  //     const response = await bookChef({...formData}).unwrap();
 
-      console.log('Booking Successful!', response);
+  //     console.log('Booking Successful!', response);
 
-      if (response?.success) {
-        navigation.navigate('BookingConfirmation');
-      }
-    } catch (error) {
-      console.log(
-        'Booking Failed:',
-        error?.data?.data || error?.message || error,
-      );
-      notify('error', {
-        params: {
-          description: 'No Chefs available.',
-          title: 'Available Chefs',
-          style: {
-            multiline: 3,
-          },
-        },
-        config: {
-          isNotch: true,
+  //     if (response?.success) {
+  //       navigation.navigate('BookingConfirmation');
+  //     }
+  //   } catch (error) {
+  //     console.log(
+  //       'Booking Failed:',
+  //       error?.data?.data || error?.message || error,
+  //     );
+  //     notify('error', {
+  //       params: {
+  //         description: 'No Chefs available.',
+  //         title: 'Available Chefs',
+  //         style: {
+  //           multiline: 3,
+  //         },
+  //       },
+  //       config: {
+  //         isNotch: true,
 
-          // notificationPosition: 'center',
-          // animationConfig: "SlideInLeftSlideOutRight",
-          // duration: 200,
-        },
-      });
-    }
-  };
+  //         // notificationPosition: 'center',
+  //         // animationConfig: "SlideInLeftSlideOutRight",
+  //         // duration: 200,
+  //       },
+  //     });
+  //   }
+  // };
 
   // Render each item in the list.
   const renderItem = ({item}) => {
@@ -309,7 +309,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
           barStyle={'dark-content'}
         />
 
-        {isBookingChef ? (
+        {initiatingPayment ? (
           <View style={styles.containerLoad}>
             <View style={styles.loadingContainer}>
               <LottieView
@@ -327,18 +327,11 @@ const SpecialCheckoutScreen = ({navigation}) => {
               <TouchableOpacity onPress={() => navigation.goBack()}>
                 <Ionicons name="arrow-back" size={30} color="black" />
               </TouchableOpacity>
-              <View className="ml-3 ">
-                <View className="mb-2">
-                  <Text
-                    style={{fontFamily: 'Roboto Regular'}}
-                    className="text-lg text-gray-400">
-                    Checkout
-                  </Text>
-                </View>
+              <View className="ml-3">
                 <Text
                   style={{fontFamily: 'Roboto Regular'}}
-                  className="text-md">
-                  Your Booking will be confirmed for
+                  className="text-lg text-gray-400">
+                  Checkout
                 </Text>
                 <AddressPreview navigation={navigation} />
               </View>
@@ -391,13 +384,13 @@ const SpecialCheckoutScreen = ({navigation}) => {
 
               {/* Order Summary */}
               <View style={styles.summaryContainer}>
-                <Text className="text-[16px] font-semibold">Amount/person</Text>
+                <Text className="text-[19px] font-semibold">Amount/person</Text>
                 <Text style={styles.summaryAmount}>
                   ₹ {catering ? amount.toFixed(2) : amountPerPerson.toFixed(2)}
                 </Text>
               </View>
               <View style={styles.summaryContainer}>
-                <Text className="text-[16px] font-semibold">
+                <Text className="text-[19px] font-semibold">
                   Number of Guests
                 </Text>
                 <Text style={styles.summaryAmount}>
@@ -407,7 +400,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
               </View>
               {catering && (
                 <View style={styles.summaryContainer}>
-                  <Text className="text-[16px] font-semibold">
+                  <Text className="text-[20px] font-semibold">
                     Discount
                     <Text className="text-gray-600 text-sm font-normal">
                       (First Order)
@@ -452,10 +445,10 @@ const SpecialCheckoutScreen = ({navigation}) => {
                 style={styles.payButton}
                 onPress={() => {
                   // if (catering) {
-                  // handlePayment();
+                  handlePayment();
                   // return;
                   // } else {
-                  handleDummyPayment();
+                  //   handleDummyPayment();
                   //   return;
                   // }
                 }}>
@@ -550,16 +543,16 @@ const styles = StyleSheet.create({
   summaryContainer: {
     borderTopWidth: 1,
     borderColor: '#ddd',
-    paddingVertical: 12,
+    paddingVertical: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   summaryText: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   summaryAmount: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#22c55e',
   },

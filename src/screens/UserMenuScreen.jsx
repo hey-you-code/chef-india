@@ -44,7 +44,7 @@ const UserMenuScreen = ({navigation}) => {
         <View className="mx-2 flex-row justify-between items-center mt-[50px] mb-[10px]">
           <View className="flex-row space-x-2">
             <TouchableOpacity onPress={() => {
-                // dispatch(resetMenu());
+                dispatch(resetMenu());
                 navigation.goBack();
                 }}>
               <Ionicons name="arrow-back" size={30} color={'black'} />

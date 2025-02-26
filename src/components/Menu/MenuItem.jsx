@@ -28,7 +28,6 @@ const MenuItem = ({
   };
 
   // console.log('formDatafromMenu: ', formData?.menu?.items);
-  // console.log("actionapplicable: ", actionApplicable);
 
   return (
     <View
@@ -41,7 +40,7 @@ const MenuItem = ({
           <Text className="text-left text-xl flex-wrap font-semibold tracking-tighter ">
             {name}
           </Text>
-          {!preview  ? <Text className="text-lg font-medium">₨ {price}</Text> : <></>}
+          {!preview ? <Text className="text-lg font-medium">₨ {price}</Text> : <></>}
           <Text numberOfLines={!preview ? 2 : 3} ellipsizeMode="tail" className="font-normal">
             {description}
           </Text>

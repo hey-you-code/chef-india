@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useRef} from 'react';
 import {
   ScrollView,
   View,
@@ -12,8 +12,7 @@ import {
 import DateTimeSelector from '../../utils/DateTimeSelector';
 import WhosComingComponent from './WhosComingComponent';
 import WhatComponent from './WhatComponent';
-import {useDispatch, useSelector} from 'react-redux';
-import {setFormData} from '../../features/slices/chefbookingSlice';
+import {useSelector} from 'react-redux';
 // import {createNotifications} from 'react-native-notificated';
 
 // const {useNotifications} = createNotifications();
@@ -31,9 +30,8 @@ const DummyComponent = () => {
 
 const FirstPage = ({navigation}) => {
   const {formData} = useSelector(state => state.chefBooking);
-  const {user} = useSelector(state => state.user);
-  console.log('formData: ', formData);
-  const dispatch = useDispatch();
+
+  console.log("formData: ", formData);
 
   // const {notify} = useNotifications();
 
@@ -44,37 +42,6 @@ const FirstPage = ({navigation}) => {
   const calendarHeight = useRef(new Animated.Value(0)).current;
   const whoHeight = useRef(new Animated.Value(0)).current;
   const whatHeight = useRef(new Animated.Value(320)).current;
-
-  useEffect(() => {
-    if (user?.user?.address?.houseNumber) {
-      // Only set if customerLocation is empty
-      if (!formData?.customerLocation?.houseNumber) {
-        dispatch(
-          setFormData({
-            field: 'customerLocation',
-            value: user?.user?.address,
-          }),
-        );
-      }
-    }
-
-    if (
-      !formData?.customerInfo?.name ||
-      !formData?.customerInfo?.phoneNumber
-    ) {
-      dispatch(
-        setFormData({
-          field: 'customerInfo',
-          value: {
-            name: formData?.customerInfo?.name || user?.user?.name,
-            phoneNumber:
-              formData?.customerInfo?.phoneNumber || user?.user?.phoneNumber,
-          },
-        }),
-      );
-    }
-    
-  }, []);
 
   // Expand the "When" section and collapse "Who" and "What"
   const expandWhenSection = () => {
@@ -306,17 +273,7 @@ const FirstPage = ({navigation}) => {
             navigation.navigate('Checkout');
             return;
           }
-
-          if (formData?.bookingType === 'special') {
-            dispatch(setFormData({field: 'catering', value: false}));
-            navigation.navigate('UserMenu', {
-              actionApplicable: true,
-              menuType: 'special',
-              country: 'India',
-            });
-            return;
-          }
-          // navigation.navigate('Map');
+          navigation.navigate('Map');
         }}
         style={{
           // backgroundColor: 'white',
