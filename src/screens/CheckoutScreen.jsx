@@ -23,9 +23,9 @@ const {width: WIDTH} = Dimensions.get('window');
 
 const CheckoutScreen = ({navigation}) => {
   // Get booking details from Redux. Here we assume formData is an array.
-  const {formData} = useSelector(state => state.chefBooking);
+  const {formData = {}} = useSelector(state => state.chefBooking);
   const [initiatingPayment, setInitiatingPayment] = useState(false);
-  const booking = Array.isArray(formData) ? formData[0] : formData;
+  const booking = Array.isArray(formData) ? formData[0] : formData || {};
 
   if (!booking) {
     return (
@@ -37,7 +37,9 @@ const CheckoutScreen = ({navigation}) => {
     );
   }
 
-  const {eventType, eventTimings, numberOfGuests} = booking;
+  const eventType = booking?.eventType || {};
+  const eventTimings = booking?.eventTimings || {};
+  const numberOfGuests = booking?.numberOfGuests || 1;
 
   // Define base prices per item for each meal
   const basePrices = {
@@ -49,8 +51,8 @@ const CheckoutScreen = ({navigation}) => {
 
   // Helper: parse date string (assumes YYYY-MM-DD format)
   const parseDate = dateStr => (dateStr ? new Date(dateStr) : null);
-  const startDate = parseDate(eventTimings?.startDate);
-  const endDate = parseDate(eventTimings?.endDate);
+  const startDate = parseDate(eventTimings?.startDate || '');
+  const endDate = parseDate(eventTimings?.endDate || '');
 
   // If endDate is null, use only startDate
   const diffTime = endDate ? Math.abs(endDate - startDate) : 0;
@@ -64,7 +66,7 @@ const CheckoutScreen = ({navigation}) => {
   let breakdown = [];
   let baseCost = 0;
   Object.keys(basePrices).forEach(meal => {
-    if (eventType[meal] && eventType[meal].numberOfItems) {
+    if (eventType?.[meal] && eventType?.[meal]?.numberOfItems) {
       const numItems = eventType[meal].numberOfItems;
       const mealPrice = basePrices[meal];
       const mealCost = numItems * mealPrice * guests * diffDays;
@@ -192,46 +194,50 @@ const CheckoutScreen = ({navigation}) => {
 
   console.log('data to be sent: ', JSON.stringify(formData, null, 2));
 
-  // const handleDummyPayment = async () => {
-  //   try {
-  //     console.log('Request started...');
+  const handleDummyPayment = async () => {
+    try {
+      console.log('Request started...');
 
-  //     const response = await bookChef({...formData}).unwrap();
+      const response = await bookChef({...formData}).unwrap();
 
-  //     console.log('Booking Successful!', response);
+      console.log('Booking Successful!', response);
 
-  //     if (response?.success) {
-  //       navigation.navigate('BookingConfirmation');
-  //     }
-  //   } catch (error) {
-  //     console.log(
-  //       'Booking Failed:',
-  //       error?.data?.data || error?.message || error,
-  //     );
-  //     notify('error', {
-  //       params: {
-  //         description: 'No Chefs available.',
-  //         title: 'Available Chefs',
-  //         style: {
-  //           multiline: 3,
-  //         },
-  //       },
-  //       config: {
-  //         isNotch: true,
+      if (response?.success) {
+        navigation.navigate('BookingConfirmation');
+      }
+    } catch (error) {
+      console.log(
+        'Booking Failed:',
+        error?.data?.data || error?.message || error,
+      );
+      notify('error', {
+        params: {
+          description: 'No Chefs available.',
+          title: 'Available Chefs',
+          style: {
+            multiline: 3,
+          },
+        },
+        config: {
+          isNotch: true,
 
-  //         // notificationPosition: 'center',
-  //         // animationConfig: "SlideInLeftSlideOutRight",
-  //         // duration: 200,
-  //       },
-  //     });
-  //   }
-  // };
+          // notificationPosition: 'center',
+          // animationConfig: "SlideInLeftSlideOutRight",
+          // duration: 200,
+        },
+      });
+    }
+  };
 
   return (
     <View className="flex-1 bg-white relative">
-      <StatusBar translucent={true} barStyle="dark-content" backgroundColor="transparent" />
+      <StatusBar
+        translucent={true}
+        barStyle="dark-content"
+        backgroundColor="transparent"
+      />
 
-      {initiatingPayment ? (
+      {isBookingChef ? (
         <View style={styles.container}>
           <View style={styles.loadingContainer}>
             <LottieView
@@ -245,16 +251,19 @@ const CheckoutScreen = ({navigation}) => {
         </View>
       ) : (
         <>
-          <View  className="flex-row items-start px-4 pt-12 pb-2 bg-white">
+          <View className="flex-row items-start px-4 pt-12 pb-2 bg-white">
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={30} color="black" />
             </TouchableOpacity>
-            <View className="ml-3">
-              <Text
-                style={{fontFamily: 'Roboto Regular'}}
-                className="text-lg text-gray-400">
-                Checkout
-              </Text>
+            <View className="ml-3 ">
+              <View className="mb-2">
+                <Text
+                  style={{fontFamily: 'Roboto Regular'}}
+                  className="text-lg text-gray-400">
+                  Checkout
+                </Text>
+              </View>
+              <Text style={{fontFamily: 'Roboto Regular'}} className="text-md">Your Booking will be confirmed for</Text>
               <AddressPreview navigation={navigation} />
             </View>
           </View>
@@ -301,7 +310,7 @@ const CheckoutScreen = ({navigation}) => {
           </ScrollView>
 
           <TouchableOpacity
-            onPress={handlePayment}
+            onPress={handleDummyPayment}
             className="absolute bottom-6 left-4 right-4 bg-green-500 py-4 rounded-2xl flex-row items-center justify-center shadow-lg">
             <Ionicons name="cart-outline" size={24} color="white" />
             <Text className="ml-3 text-white text-lg font-bold">

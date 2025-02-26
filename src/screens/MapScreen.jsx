@@ -48,7 +48,7 @@ const MapScreen = ({navigation}) => {
   const {user} = useSelector(state => state.user);
   const dispatch = useDispatch();
 
-  console.log('formData1: ', formData);
+  // console.log('formData1: ', formData);
 
   const {address} = user?.user;
 
@@ -73,12 +73,7 @@ const MapScreen = ({navigation}) => {
     longitudeDelta: 0.01,
   });
 
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener('focus', () => {
-  //     dispatch(resetMenu());
-  //   });
-  //   return unsubscribe;
-  // }, [navigation]);
+
 
   const [fetchingCurrentLocation, setFetchingCurrentLocation] = useState(false);
 
@@ -564,7 +559,19 @@ const BottomSheetContent = ({
   const {user} = useSelector(state => state.user);
   const {formData} = useSelector(state => state.chefBooking);
 
-  // console.log('houseNumber: ', formData?.customerLocation?.houseNumber);
+  useEffect(() => {
+    if (user && user.user && !formData?.customerInfo?.name && !formData?.customerInfo?.phoneNumber) {
+      dispatch(
+        setFormData({
+          field: 'customerInfo',
+          value: {
+            name: user.user.name,
+            phoneNumber: user.user.phoneNumber,
+          },
+        }),
+      );
+    }
+  }, []);
 
   // Validate that required fields in customerLocation and customerInfo are filled
   const checkValidation = () => {
@@ -596,24 +603,7 @@ const BottomSheetContent = ({
     return true;
   };
 
-  // On component mount, set customerInfo from user data.
-  useEffect(() => {
-    if (user && user.user) {
-      dispatch(
-        setFormData({
-          field: 'customerInfo',
-          value: {
-            name: user.user.name,
-            phoneNumber: user.user.phoneNumber,
-          },
-        }),
-      );
-
-      // dispatch(setFormData({
-      //   field
-      // }))
-    }
-  }, [dispatch, user]);
+ 
 
   const [updateAddress, {isLoading: isUpdatingAddress}] =
     useUpdateAddressMutation();
@@ -642,19 +632,6 @@ const BottomSheetContent = ({
     } catch (error) {
       console.log('error: ', error);
     }
-
-    // if (formData?.bookingType === 'special') {
-    //   dispatch(setFormData({field: 'catering', value: false}));
-    //   navigation.navigate('UserMenu', {
-    //     actionApplicable: true,
-    //     menuType: 'special',
-    //     country: 'India',
-    //   });
-
-    //   // navigation.navigate('UserDecision');
-    //   return;
-    // }
-    // navigation.goBack();
   };
 
   return (

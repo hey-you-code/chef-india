@@ -56,6 +56,7 @@ const AddressPreview = ({navigation}) => {
           numberOfLines={1}
           style={{fontFamily: 'Roboto Regular'}}
           className="text-gray-500">
+       
           {address?.streetName ||
             address?.streetNumber ||
             address?.premise ||
@@ -101,18 +102,18 @@ const BottomSheetContent = ({closeBottomSheet, handleNavigation}) => {
 
       {/* Address Inputs */}
       <View style={{width: width*0.9}} className="rounded-2xl shadow-sm mx-auto">
-        <TouchableOpacity onPress={handleNavigation} className="flex-row space-x-4 w-full items-center">
+        <TouchableOpacity onPress={handleNavigation} className="flex-row space-x-4 w-full items-center bg-white rounded-2xl">
           <View
             style={{elevation: 2}}
             className="border border-gray-300 bg-white rounded-lg p-2 items-center justify-center">
             <Ionicons name="paper-plane" size={30} color={'#ef4444'} />
           </View>
-          <View style={{maxWidth: width*0.7}} className="">
+          <View style={{maxWidth: width*0.7}} className="flex-1">
             <Text className="text-black font-semibold text-lg">
               {user?.user?.name}
             </Text>
             <View style={{}} className="flex-row">
-                <Text  numberOfLines={1}  ellipsizeMode='tail' className="">
+                <Text     className="">
                 {address?.streetName ||
                     address?.streetNumber ||
                     address?.premise ||
