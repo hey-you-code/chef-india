@@ -31,6 +31,7 @@ import {
   reverseGeoCoding,
 } from '../utils/utilityFunctions';
 import {useFindCateringMutation} from '../features/chefBook/chefBookingApiSlice';
+import LottieView from 'lottie-react-native';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 const OPERATED_STATES = ['Assam', 'Telangana'];
@@ -190,7 +191,7 @@ const CateringScreen = ({navigation}) => {
     }
   }, []);
 
-//   console.log('formData: ', formData);
+  //   console.log('formData: ', formData);
   return (
     <View className="flex-1 bg-white">
       <StatusBar translucent={true} barStyle="dark-content" />
@@ -433,7 +434,17 @@ const CateringScreen = ({navigation}) => {
             </Text>
           </View>
           <BottomSheetScrollView showsVerticalScrollIndicator={false}>
-            {availableCaterers.length > 0 ? (
+            {isFindingCatering ? (
+              <View className="flex items-center justify-center h-64">
+              <LottieView
+                source={require("../../assets/animation/loading_animation.json")} // Update path to your Lottie file
+                autoPlay
+                loop
+                style={{ width: 150, height: 150 }}
+              />
+            </View>
+    
+            ) : availableCaterers.length > 0 ? (
               availableCaterers.map(item => (
                 <Caterer
                   key={item?._id}
@@ -447,12 +458,13 @@ const CateringScreen = ({navigation}) => {
                 <Text
                   style={{fontFamily: 'Anton'}}
                   className="text-gray-400 text-2xl text-left">
-                  NO CATERINGS AVAILABLE IN YOUR LOCATION. 
+                  NO CATERINGS AVAILABLE IN YOUR LOCATION.
                   {'\n'}
                   TRY CHANGING YOUR LOCATION
                 </Text>
               </View>
             )}
+
             <View style={{minHeight: HEIGHT / 2}} />
           </BottomSheetScrollView>
         </View>

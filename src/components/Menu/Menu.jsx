@@ -198,8 +198,8 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
     <View style={{flex: 1}}>
       {/* Search Bar */}
 
-      <View style={!preview ? {padding: 16} : {padding: 0}}>
-        {!preview ? (
+      <View style={true ? {padding: 16} : {padding: 0}}>
+        {true ? (
           <View style={{position: 'relative'}}>
             <TextInput
               placeholder="Search Menu Items"

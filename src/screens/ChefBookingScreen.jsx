@@ -16,6 +16,7 @@ import SecondPage from '../components/ChefBooking/SecondPage';
 import {
   moveToPreviousPage,
   resetFormData,
+  resetMenu,
   setBookingType,
   setFormData,
 } from '../features/slices/chefbookingSlice';
@@ -31,6 +32,17 @@ const ChefBookingScreen = ({navigation}) => {
 
   const {user} = useSelector(state => state.user);
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      dispatch(resetFormData());
+    });
+    return () => {
+      unsubscribe(); // Cleanup
+    };
+  }, [navigation, dispatch]);
+
+
+
   if (!user) {
     return (
       <GestureHandlerRootView style={{flex: 1}}>
@@ -40,13 +52,6 @@ const ChefBookingScreen = ({navigation}) => {
       </GestureHandlerRootView>
     );
   }
-
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener('focus', () => {
-  //     dispatch(resetFormData());
-  //   });
-  //   return unsubscribe;
-  // }, [navigation]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">

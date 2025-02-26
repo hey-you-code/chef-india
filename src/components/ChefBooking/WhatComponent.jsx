@@ -1,47 +1,49 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {setFormData} from '../../features/slices/chefbookingSlice';
 
 const WhatComponent = ({onNext}) => {
-  // Access global formData from Redux.
+  // Declare ALL hooks at the top unconditionally
+  const [activeTab, setActiveTab] = useState('breakfast');
+  const [selectedSpecial, setSelectedSpecial] = useState(null);
   const {formData} = useSelector(state => state.chefBooking);
   const dispatch = useDispatch();
 
-  // Get booking type from the formData
+  // Get booking type once at the top
   const bookingType = formData?.bookingType;
+  const tabs = ['breakfast', 'lunch', 'snacks', 'dinner'];
+  const specialOptions = ['Marriage', 'Birthday', 'Anniversary', 'Other'];
 
-  // If booking type is "regular", display the existing tabs + counter UI.
+  // Reset states when bookingType changes
+  useEffect(() => {
+    setActiveTab('breakfast');
+    setSelectedSpecial(null);
+  }, [bookingType]);
+
+  // Regular booking logic
+  const counterValue = formData?.eventType?.[activeTab]?.numberOfItems ?? 0;
+
+  const handleRegularCounter = (operation) => {
+    const newValue = operation === 'increment' ? counterValue + 1 : Math.max(counterValue - 1, 0);
+    dispatch(
+      setFormData({
+        field: 'eventType',
+        subfield: activeTab,
+        subfield2: 'numberOfItems',
+        value: newValue,
+      })
+    );
+  };
+
+  // Special booking logic
+  const handleSpecialSelection = (option) => {
+    setSelectedSpecial(option);
+    dispatch(setFormData({ field: 'eventType', value: option }));
+  };
+
+  // Conditional rendering based on booking type
   if (bookingType === 'regular') {
-    const [activeTab, setActiveTab] = useState('breakfast');
-    const tabs = ['breakfast', 'lunch', 'snacks', 'dinner'];
-    // Derive the counter value for the active tab from global state. Default to 0 if not defined.
-    const counterValue = formData?.eventType?.[activeTab]?.numberOfItems ?? 0;
-
-    const increment = () => {
-      const newValue = counterValue + 1;
-      dispatch(
-        setFormData({
-          field: 'eventType',
-          subfield: activeTab,
-          subfield2: 'numberOfItems',
-          value: newValue,
-        }),
-      );
-    };
-
-    const decrement = () => {
-      const newValue = Math.max(counterValue - 1, 0);
-      dispatch(
-        setFormData({
-          field: 'eventType',
-          subfield: activeTab,
-          subfield2: 'numberOfItems',
-          value: newValue,
-        }),
-      );
-    };
-
     return (
       <View style={styles.container}>
         <View style={styles.tabsContainer}>
@@ -50,11 +52,7 @@ const WhatComponent = ({onNext}) => {
               key={tab}
               style={[styles.tab, activeTab === tab && styles.activeTab]}
               onPress={() => setActiveTab(tab)}>
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === tab && styles.activeTabText,
-                ]}>
+              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
             </TouchableOpacity>
@@ -64,11 +62,15 @@ const WhatComponent = ({onNext}) => {
         <View style={styles.counterContainer}>
           <Text style={styles.counterLabel}>Number of Items</Text>
           <View style={styles.counterControls}>
-            <TouchableOpacity style={styles.counterButton} onPress={decrement}>
+            <TouchableOpacity 
+              style={styles.counterButton} 
+              onPress={() => handleRegularCounter('decrement')}>
               <Text style={styles.counterButtonText}>–</Text>
             </TouchableOpacity>
             <Text style={styles.counterValue}>{counterValue}</Text>
-            <TouchableOpacity style={styles.counterButton} onPress={increment}>
+            <TouchableOpacity 
+              style={styles.counterButton} 
+              onPress={() => handleRegularCounter('increment')}>
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
           </View>
@@ -77,22 +79,7 @@ const WhatComponent = ({onNext}) => {
     );
   }
 
-  // For "special" booking, show a grid with four options.
-  else if (bookingType === 'special' || bookingType === 'catering') {
-    const specialOptions = ['Marriage', 'Birthday', 'Anniversary', 'Other'];
-    const [selectedSpecial, setSelectedSpecial] = useState(null);
-
-    const handleSelectOption = option => {
-      setSelectedSpecial(option);
-      // For a special booking, we update eventType directly with the chosen option.
-      dispatch(
-        setFormData({
-          field: 'eventType',
-          value: option,
-        }),
-      );
-    };
-
+  if (bookingType === 'special' || bookingType === 'catering') {
     return (
       <View style={styles.container}>
         <Text style={styles.specialHeader}>Select Event Type</Text>
@@ -104,13 +91,11 @@ const WhatComponent = ({onNext}) => {
                 styles.specialOption,
                 selectedSpecial === option && styles.specialOptionSelected,
               ]}
-              onPress={() => handleSelectOption(option)}>
-              <Text
-                style={[
-                  styles.specialOptionText,
-                  selectedSpecial === option &&
-                    styles.specialOptionTextSelected,
-                ]}>
+              onPress={() => handleSpecialSelection(option)}>
+              <Text style={[
+                styles.specialOptionText,
+                selectedSpecial === option && styles.specialOptionTextSelected
+              ]}>
                 {option}
               </Text>
             </TouchableOpacity>
@@ -120,7 +105,12 @@ const WhatComponent = ({onNext}) => {
     );
   }
 
-  // If booking type is neither "regular" nor "special", show a default message.
+  // Fallback for unknown booking types
+  return (
+    <View style={styles.container}>
+      <Text>Please select a booking type first</Text>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
