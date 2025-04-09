@@ -32,6 +32,8 @@ import {
 } from '../utils/utilityFunctions';
 import {useFindCateringMutation} from '../features/chefBook/chefBookingApiSlice';
 import LottieView from 'lottie-react-native';
+import CalendarComponent from '../utils/CalendarComponent';
+import { useGetMenuQuery } from '../features/menu/menuApiSlice';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 const OPERATED_STATES = ['Assam', 'Telangana'];
@@ -39,8 +41,9 @@ const OPERATED_STATES = ['Assam', 'Telangana'];
 const CateringScreen = ({navigation}) => {
   const {user} = useSelector(state => state.user);
   const {formData} = useSelector(state => state.chefBooking);
+  
 
-  const {address} = user?.user;
+  const address = user?.user?.address;
 
   const [currentAddress, setCurrentAddress] = useState(address);
   const [region, setRegion] = useState({
@@ -52,6 +55,7 @@ const CateringScreen = ({navigation}) => {
   const [showHeader, setShowHeader] = useState(true);
 
   const [availableCaterers, setAvailableCaterers] = useState([]);
+  const [chefWithinLocation, setChefWithinLocation] = useState(false);
 
   const [fetchingCurrentLocation, setFetchingCurrentLocation] = useState(false);
 
@@ -128,10 +132,12 @@ const CateringScreen = ({navigation}) => {
           longitude,
           startDate: formData?.eventTimings?.startDate,
           endDate: formData?.eventTimings?.endDate,
+          timeSlots: formData?.eventTimings?.timeSlots,
         }).unwrap();
 
         setAvailableCaterers(response?.data?.availableChefs);
-        console.log('catering: ', response?.data?.availableChefs);
+        setChefWithinLocation(response?.data?.chefWithinLocation);
+        console.log('catering: ', response?.data);
       } catch (error) {
         console.error('error: ', error);
       }
@@ -169,7 +175,7 @@ const CateringScreen = ({navigation}) => {
   const bottomSheetRef = useRef(null);
 
   // Snap points: 50% (index 0) and 100% (index 1)
-  const snapPoints = useMemo(() => [HEIGHT * 0.5, HEIGHT * 0.8], []);
+  const snapPoints = useMemo(() => ['50%', '80%'], []);
 
   // Handle backdrop press and prevent closing
   const handleSheetChanges = useCallback(index => {
@@ -418,8 +424,9 @@ const CateringScreen = ({navigation}) => {
           />
         )}>
         <View style={{flex: 1}}>
-          <View className="px-4">
+          <View className="px-4 pb-2">
             <Text style={{fontSize: 16, fontWeight: '600', color: '#333'}}>
+              <Ionicons name="location-sharp" color={'red'} size={16} />
               {region.description
                 ? region.description
                 : currentAddress?.location?.locationName || ''}{' '}
@@ -436,32 +443,61 @@ const CateringScreen = ({navigation}) => {
           <BottomSheetScrollView showsVerticalScrollIndicator={false}>
             {isFindingCatering ? (
               <View className="flex items-center justify-center h-64">
-              <LottieView
-                source={require("../../assets/animation/loading_animation.json")} // Update path to your Lottie file
-                autoPlay
-                loop
-                style={{ width: 150, height: 150 }}
-              />
-            </View>
-    
+                <LottieView
+                  source={require('../../assets/animation/loading_animation.json')} // Update path to your Lottie file
+                  autoPlay
+                  loop
+                  style={{width: 150, height: 150}}
+                />
+              </View>
             ) : availableCaterers.length > 0 ? (
               availableCaterers.map(item => (
-                <Caterer
-                  key={item?._id}
-                  name={item?.name}
-                  distance={item?.distance}
-                  navigation={navigation}
-                />
+                <View style={{width: 0.95*WIDTH}} key={item?._id} className="w-full mx-auto items-center">
+                    <Caterer
+                      cateringId={item?._id}
+                      name={item?.name}
+                      image={item?.profilePicture}
+                      distance={item?.distance}
+                      navigation={navigation}
+                    />
+                </View>
               ))
             ) : (
               <View className="m-4">
-                <Text
-                  style={{fontFamily: 'Anton'}}
-                  className="text-gray-400 text-2xl text-left">
-                  NO CATERINGS AVAILABLE IN YOUR LOCATION.
-                  {'\n'}
-                  TRY CHANGING YOUR LOCATION
-                </Text>
+                {!chefWithinLocation ? (
+                  <Text
+                    style={{fontFamily: 'Anton'}}
+                    className="text-gray-400 text-2xl text-left">
+                    NO CATERINGS AVAILABLE IN YOUR LOCATION.
+                    {'\n'}
+                    TRY CHANGING YOUR LOCATION
+                  </Text>
+                ) : (
+                  <View>
+                    <Text
+                      style={{fontFamily: 'Anton'}}
+                      className="text-gray-400 text-2xl text-left">
+                      ALL CATERINGS ARE BUSY ON THIS DATE
+                      {'\n'}
+                      TRY CHANGING YOUR DATE
+                    </Text>
+                    <CalendarComponent />
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (region?.latitude && region?.longitude) {
+                          fetchAddressDetails(
+                            region.latitude,
+                            region.longitude,
+                          );
+                        }
+                      }}
+                      className="bg-red-500 p-3 w-[40%] rounded-3xl mx-auto my-2">
+                      <Text className="text-white text-center text-lg">
+                        Search
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
 

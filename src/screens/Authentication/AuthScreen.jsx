@@ -111,7 +111,7 @@ const AuthScreen = ({navigation}) => {
         phoneNumber: formattedValue,
       }).unwrap();
 
-      // console.log(response);
+      console.log(response); 
       setTab(tab => tab + 1);
     } catch (error) {
       console.log('error while sending otp: ', error);
@@ -177,7 +177,7 @@ const AuthScreen = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#FF3130]">
+    <SafeAreaView style={{flex: 1}} className="bg-[#FF3130]">
       {/*  */}
       <StatusBar
         translucent={false}
@@ -203,10 +203,10 @@ const AuthScreen = ({navigation}) => {
       {tab === 0 ? (
         <ImageBackground
           source={welcomepage}
-          resizeMode="cover"
+          resizeMode="contain"
           className=""
           style={{flex: 1, height: HEIGHT}}>
-          <View style={{height: HEIGHT * 0.95}} className="justify-end">
+          <View style={{height: HEIGHT * 0.9}} className="justify-end">
             <TouchableOpacity
               onPress={() => setTab(tab + 1)}
               style={{width: WIDTH * 0.9}}
@@ -291,9 +291,10 @@ const AuthScreen = ({navigation}) => {
                   flex: 1,
                   justifyContent: 'flex-end',
                   paddingBottom: 30,
-
                 }}>
-                <View style={{width: WIDTH * 0.9}} className="mx-auto items-center justify-center">
+                <View
+                  style={{width: WIDTH * 0.9}}
+                  className="mx-auto items-center justify-center">
                   <OTPTextView
                     handleTextChange={text => setOtp(text)}
                     tintColor={'black'}
@@ -323,7 +324,10 @@ const AuthScreen = ({navigation}) => {
                 <TouchableOpacity
                   onPress={handleOtpVerification}
                   style={{width: WIDTH * 0.9}}
-                  className="bg-black mx-auto flex-row items-center justify-center rounded-[16px] h-[70px] px-4 mt-4">
+                  disabled={otp === ""}
+                  className={` mx-auto flex-row items-center justify-center rounded-[16px] h-[70px] px-4 mt-4 ${
+                    otp === "" ? 'bg-gray-400' : 'bg-black'
+                  }`}>
                   <View className="flex-row items-center space-x-3">
                     <Text className="text-white font-medium text-2xl">
                       Verify

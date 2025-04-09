@@ -1,39 +1,50 @@
 [
-    {
-        "menu": {
-          "items": []
-        },
-        "customerLocation": {
-          "city": "Mountain View",
-          "state": "California",
-          "postalCode": "94043",
-          "location": {
-            "locationName": "43 Amphitheatre Parkway",
-            "type": "Point",
-            "coordinates": [
-              -122.08400001749396,
-              37.4219981990569
-            ]
-          }
-        },
-        "eventType": {
-          "breakfast": {
-            "numberOfItems": 3
-          },
-          "snacks": {
-            "numberOfItems": 4
-          },
-          "lunch": {
-            "numberOfItems": 4
-          },
-          "dinner": {
-            "numberOfItems": 3
-          }
-        },
-        "eventTimings": {
-          "startDate": "2025-02-11",
-          "endDate": "2025-02-18"
-        },
-        "numberOfGuests": 8
+  {
+    "_id": "67c5686349e85df5fd93dfa6",
+    "user": "67b8b6a0fa1b3b847f9da24a",
+    "customerInfo": {
+      "name": "Kaushik",
+      "phoneNumber": "+919101147348"
+    },
+    "customerLocation": {
+      "premise": "",
+      "locality": "Sualkuchi",
+      "sublocalityLevel2": "",
+      "sublocalityLevel1": "Noh-Para",
+      "city": "Sualkuchi",
+      "district": "Kamrup",
+      "state": "Assam",
+      "country": "India",
+      "postalCode": "781103",
+      "location": {
+        "locationName": "",
+        "type": "Point",
+        "coordinates": [
+          91.5703265927732,
+          26.170329900366003
+        ]
+      },
+      "houseNumber": "12"
+    },
+    "bookingStatus": "confirmed",
+    "eventType": {
+      "breakfast": {
+        "numberOfItems": 2
       }
+    },
+    "numberOfGuests": "2",
+    "bookingType": "regular",
+    "menu": {
+      "items": [],
+      "totalItems": 0
+    },
+    "attemptedChefs": [
+      "67c4e5ee584e400bfd4a76bb"
+    ],
+    "createdAt": "2025-03-03T08:29:23.573Z",
+    "updatedAt": "2025-03-03T08:29:24.013Z",
+    "__v": 1,
+    "chef": "67c4e5ee584e400bfd4a76bb",
+    "earning": "67c5686349e85df5fd93dfa9"
+  }
 ]

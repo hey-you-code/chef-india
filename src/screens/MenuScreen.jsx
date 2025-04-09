@@ -96,7 +96,7 @@ const MenuScreen = ({navigation}) => {
             }}>
             <Ionicons name="arrow-back" size={30} color={'black'} />
           </TouchableOpacity>
-          <Text className="text-2xl font-semibold text-black">MENU</Text>
+          <Text className="text-2xl font-semibold text-black">Explore</Text>
         </View>
         {tab === 0 ? (
           <View
@@ -152,7 +152,7 @@ const MenuScreen = ({navigation}) => {
 
               <View className="bg-black/40 space-y-4 h-full p-3 rounded-2xl">
                 <Text className="text-white text-[25px] font-bold">
-                  Chef India Menu
+                  Menu
                 </Text>
 
                 {/* Updated View for Ionicons */}
@@ -177,7 +177,7 @@ const MenuScreen = ({navigation}) => {
               menuType={menuType}
               country={country}
               actionApplicable={actionApplicable}
-              preview={false}
+              preview={true}
             />
           </Animated.View>
         ) : undefined}

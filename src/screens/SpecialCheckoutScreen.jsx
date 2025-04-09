@@ -16,21 +16,29 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import RazorpayCheckout from 'react-native-razorpay';
 import axios from 'axios';
 import {takeActionForMenuItems} from '../features/slices/chefbookingSlice';
-import {useBookChefMutation} from '../features/chefBook/chefBookingApiSlice';
+import {
+  useBookCateringMutation,
+  useBookChefMutation,
+} from '../features/chefBook/chefBookingApiSlice';
 import LottieView from 'lottie-react-native';
 import loading_animation from '../../assets/animation/loading_animation.json';
 import {notify} from 'react-native-notificated';
 import AddressPreview from '../components/AddressPreview';
+import {useBottomSheet} from '../contexts/BottomSheetContext';
+import { BottomSheetContent } from './MapScreen';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
 const SpecialCheckoutScreen = ({navigation}) => {
   // Retrieve the formData from your Redux store
+  const {user} = useSelector(state => state.user);
   const {formData} = useSelector(state => state.chefBooking);
   const dispatch = useDispatch();
   const [initiatingPayment, setInitiatingPayment] = useState(false);
   const {menu, bookingType, customerLocation, customerInfo, catering} =
     formData || {};
+
+  const {openBottomSheet, closeBottomSheet} = useBottomSheet();
 
   const numberOfGuests = parseInt(formData?.numberOfGuests) || 1;
   const numberOfDays = 1;
@@ -93,7 +101,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
   //   return sum + price * 0.08 * quantity;
   // }, 0);
 
-  const discount = '64.8%';
+  // const discount = '64.8%';
 
   let totalAmount = items.reduce((sum, item) => {
     const price = parseFloat(item.itemPrice) || 0;
@@ -101,7 +109,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
     return sum + price * quantity;
   }, 0);
 
-  totalAmount = totalAmount * (1 - parseFloat(discount) / 100);
+  // totalAmount = totalAmount * (1 - parseFloat(discount) / 100);
 
   let processingFee = totalAmount * 0.08;
 
@@ -112,8 +120,8 @@ const SpecialCheckoutScreen = ({navigation}) => {
       setInitiatingPayment(true);
       // create Order
       const response = await axios.post(
-        'https://admin.cheffindia.com/api/v1/admin/payment/createOrder',
-        // 'http://10.0.2.2:9100/api/v1/auth/chef/createOrder',
+        // 'https://admin.cheffindia.com/api/v1/admin/payment/createOrder',
+        'https://chef-booking.cheffindia.com/api/v1/booking/createOrder',
         {
           amount: catering ? finalTotal : finalTotalNonCatering,
           ...formData,
@@ -146,22 +154,42 @@ const SpecialCheckoutScreen = ({navigation}) => {
           // Payment Success - Verify payment with backend
           console.log('Payment Success: ', data);
 
-          const verifyResponse = await axios.post(
-            'https://admin.cheffindia.com/api/v1/admin/payment/verifyPayment',
-            // 'http://10.0.2.2:9100/api/v1/auth/chef/verifyPayment', // Replace with your verification endpoint
-            {
-              paymentDetails: {
-                razorpay_order_id: data.razorpay_order_id,
-                razorpay_payment_id: data.razorpay_payment_id,
-                razorpay_signature: data.razorpay_signature,
-              },
-              ...formData,
-            },
-          );
+          const verifyResponse = formData?.catering
+            ? await bookCatering({
+                ...formData,
+                paymentDetails: {
+                  razorpay_order_id: data.razorpay_order_id,
+                  razorpay_payment_id: data.razorpay_payment_id,
+                  razorpay_signature: data.razorpay_signature,
+                },
+                amount: catering ? finalTotal : finalTotalNonCatering,
+              }).unwrap()
+            : await bookChef({
+                ...formData,
+                paymentDetails: {
+                  razorpay_order_id: data.razorpay_order_id,
+                  razorpay_payment_id: data.razorpay_payment_id,
+                  razorpay_signature: data.razorpay_signature,
+                },
+                amount: catering ? finalTotal : finalTotalNonCatering,
+              }).unwrap();
 
-          console.log('Verification Response: ', verifyResponse.data);
+          // const verifyResponse = await axios.post(
+          //   // 'https://admin.cheffindia.com/api/v1/admin/payment/verifyPayment',
+          //   'http://10.0.2.2:9100/api/v1/auth/chef/verifyPayment', // Replace with your verification endpoint
+          //   {
+          //     paymentDetails: {
+          //       razorpay_order_id: data.razorpay_order_id,
+          //       razorpay_payment_id: data.razorpay_payment_id,
+          //       razorpay_signature: data.razorpay_signature,
+          //     },
+          //     ...formData,
+          //   },
+          // );
 
-          if (verifyResponse.data.success) {
+          console.log('Verification Response: ', verifyResponse);
+
+          if (verifyResponse.success) {
             navigation.navigate('BookingConfirmation');
             // alert('Payment verified successfully!');
             // dispatch(
@@ -217,13 +245,18 @@ const SpecialCheckoutScreen = ({navigation}) => {
     },
   ] = useBookChefMutation();
 
+  const [bookCatering, {isLoading: isBookingCatering}] =
+    useBookCateringMutation();
+
   console.log('data to be sent: ', JSON.stringify(formData, null, 2));
 
   const handleDummyPayment = async () => {
     try {
       console.log('Request started...');
 
-      const response = await bookChef({...formData}).unwrap();
+      const response = formData?.catering
+        ? await bookCatering({...formData}).unwrap()
+        : await bookChef({...formData}).unwrap();
 
       console.log('Booking Successful!', response);
 
@@ -252,6 +285,24 @@ const SpecialCheckoutScreen = ({navigation}) => {
         },
       });
     }
+  };
+
+  const handleCompleteAddress = () => {
+    openBottomSheet(
+      <BottomSheetContent
+        handleNavigation={() => {}}
+        // addressType={addressType}
+        // setAddressType={setAddressType}
+        // formData={formData}
+        // user={user}
+        // dispatch={dispatch}
+        navigation={navigation}
+        fromMapScreen={false}
+        closeBottomSheet={closeBottomSheet}
+      />,
+      ['25%', '75%'],
+      'MAPSCREEN',
+    );
   };
 
   // Render each item in the list.
@@ -309,7 +360,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
           barStyle={'dark-content'}
         />
 
-        {isBookingChef ? (
+        {initiatingPayment || isBookingChef || isBookingCatering ? (
           <View style={styles.containerLoad}>
             <View style={styles.loadingContainer}>
               <LottieView
@@ -405,7 +456,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
                   {formData?.numberOfGuests}
                 </Text>
               </View>
-              {catering && (
+              {/* {catering && (
                 <View style={styles.summaryContainer}>
                   <Text className="text-[16px] font-semibold">
                     Discount
@@ -417,7 +468,7 @@ const SpecialCheckoutScreen = ({navigation}) => {
                     {catering ? discount : 0}
                   </Text>
                 </View>
-              )}
+              )} */}
               <View style={styles.summaryContainer}>
                 <Text style={styles.summaryText}>Total Amount</Text>
                 <Text style={styles.summaryAmount}>
@@ -446,21 +497,34 @@ const SpecialCheckoutScreen = ({navigation}) => {
                 </Text>
               </View>
 
-              {/* Pay Now Button */}
-              <TouchableOpacity
-                className="bg-green-500"
-                style={styles.payButton}
-                onPress={() => {
-                  // if (catering) {
-                  // handlePayment();
-                  // return;
-                  // } else {
-                  handleDummyPayment();
-                  //   return;
-                  // }
-                }}>
-                <Text style={styles.payButtonText}>Pay Now</Text>
-              </TouchableOpacity>
+              {!user?.user?.address?.houseNumber ? (
+                <TouchableOpacity
+                  onPress={handleCompleteAddress}
+                  className="bg-red-500"
+                  style={styles.payButton}>
+                  <View className="flex-row items-center">
+                    <Text className=" text-white text-lg font-bold">
+                      Complete Address
+                    </Text>
+                    <Ionicons name="chevron-forward" size={26} color="white" />
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  className="bg-green-500"
+                  style={styles.payButton}
+                  onPress={() => {
+                    // if (catering) {
+                    handlePayment();
+                    // return;
+                    // } else {
+                    // handleDummyPayment();
+                    //   return;
+                    // }
+                  }}>
+                  <Text style={styles.payButtonText}>Pay Now</Text>
+                </TouchableOpacity>
+              )}
             </ScrollView>
           </>
         )}

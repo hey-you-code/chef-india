@@ -17,15 +17,20 @@ import {createNotifications, notify} from 'react-native-notificated';
 import LottieView from 'lottie-react-native';
 import loading_animation from '../../assets/animation/loading_animation.json';
 import AddressPreview from '../components/AddressPreview';
+import {useBottomSheet} from '../contexts/BottomSheetContext';
+import {BottomSheetContent} from './MapScreen';
 
 // NativeWind allows us to use "className" for styling (ensure it is configured properly)
 const {width: WIDTH} = Dimensions.get('window');
 
 const CheckoutScreen = ({navigation}) => {
   // Get booking details from Redux. Here we assume formData is an array.
+  const {user} = useSelector(state => state.user);
   const {formData = {}} = useSelector(state => state.chefBooking);
   const [initiatingPayment, setInitiatingPayment] = useState(false);
   const booking = Array.isArray(formData) ? formData[0] : formData || {};
+
+  const {openBottomSheet, closeBottomSheet} = useBottomSheet();
 
   if (!booking) {
     return (
@@ -45,7 +50,7 @@ const CheckoutScreen = ({navigation}) => {
   const basePrices = {
     breakfast: 40,
     lunch: 50,
-    snacks: 50,
+    // snacks: 50,
     dinner: 60,
   };
 
@@ -100,10 +105,11 @@ const CheckoutScreen = ({navigation}) => {
       // create Order
       setInitiatingPayment(true);
       const response = await axios.post(
-        'https://admin.cheffindia.com/api/v1/admin/payment/createOrder',
-        // 'http://10.0.2.2:9100/api/v1/auth/chef/createOrder',
+        // 'https://admin.cheffindia.com/api/v1/admin/payment/createOrder',
+        'https://chef-booking.cheffindia.com/api/v1/booking/createOrder',
         {
           amount: totalAmount,
+          // amount: 1,
           ...formData,
         },
       );
@@ -133,22 +139,20 @@ const CheckoutScreen = ({navigation}) => {
           // Payment Success - Verify payment with backend
           console.log('Payment Success: ', data);
 
-          const verifyResponse = await axios.post(
-            'https://admin.cheffindia.com/api/v1/admin/payment/verifyPayment',
-            // 'http://10.0.2.2:9100/api/v1/auth/chef/verifyPayment', // Replace with your verification endpoint
-            {
-              paymentDetails: {
-                razorpay_order_id: data.razorpay_order_id,
-                razorpay_payment_id: data.razorpay_payment_id,
-                razorpay_signature: data.razorpay_signature,
-              },
-              ...formData,
+          const verifyResponse = await bookChef({
+            ...formData,
+            paymentDetails: {
+              razorpay_order_id: data.razorpay_order_id,
+              razorpay_payment_id: data.razorpay_payment_id,
+              razorpay_signature: data.razorpay_signature,
             },
-          );
+            amount: totalAmount,
+            // amount: 1,
+          }).unwrap();
 
-          console.log('Verification Response: ', verifyResponse.data);
+          console.log('Verification Response: ', verifyResponse);
 
-          if (verifyResponse.data.success) {
+          if (verifyResponse.success) {
             navigation.navigate('BookingConfirmation');
             // alert('Payment verified successfully!');
             // dispatch(
@@ -192,7 +196,10 @@ const CheckoutScreen = ({navigation}) => {
     }
   };
 
-  console.log('data to be sent: ', JSON.stringify(formData, null, 2));
+  console.log(
+    'data to be sent: ',
+    JSON.stringify(formData?.customerLocation, null, 2),
+  );
 
   const handleDummyPayment = async () => {
     try {
@@ -229,6 +236,24 @@ const CheckoutScreen = ({navigation}) => {
     }
   };
 
+  const handleCompleteAddress = () => {
+    openBottomSheet(
+      <BottomSheetContent
+        handleNavigation={() => {}}
+        // addressType={addressType}
+        // setAddressType={setAddressType}
+        // formData={formData}
+        // user={user}
+        // dispatch={dispatch}
+        navigation={navigation}
+        fromMapScreen={false}
+        closeBottomSheet={closeBottomSheet}
+      />,
+      ['25%', '75%'],
+      'MAPSCREEN',
+    );
+  };
+
   return (
     <View className="flex-1 bg-white relative">
       <StatusBar
@@ -237,7 +262,7 @@ const CheckoutScreen = ({navigation}) => {
         backgroundColor="transparent"
       />
 
-      {isBookingChef ? (
+      {initiatingPayment || isBookingChef ? (
         <View style={styles.container}>
           <View style={styles.loadingContainer}>
             <LottieView
@@ -263,7 +288,9 @@ const CheckoutScreen = ({navigation}) => {
                   Checkout
                 </Text>
               </View>
-              <Text style={{fontFamily: 'Roboto Regular'}} className="text-md">Your Booking will be confirmed for</Text>
+              <Text style={{fontFamily: 'Roboto Regular'}} className="text-md">
+                Your Booking will be confirmed for
+              </Text>
               <AddressPreview navigation={navigation} />
             </View>
           </View>
@@ -308,19 +335,30 @@ const CheckoutScreen = ({navigation}) => {
               </Text>
             </View>
           </ScrollView>
+          {!user?.user?.address?.houseNumber ? (
+            <TouchableOpacity
+              onPress={handleCompleteAddress}
+              className="absolute bottom-6 left-4 right-4 bg-red-500 py-4 rounded-2xl flex-row items-center justify-center shadow-lg space-x-6">
+              <Text className="ml-3 text-white text-lg font-bold">
+                Complete Address
+              </Text>
+              <Ionicons name="chevron-forward" size={24} color="white" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={handlePayment}
+              className="absolute bottom-6 left-4 right-4 bg-green-500 py-4 rounded-2xl flex-row items-center justify-center shadow-lg">
+              <Ionicons name="cart-outline" size={24} color="white" />
 
-          <TouchableOpacity
-            onPress={handleDummyPayment}
-            className="absolute bottom-6 left-4 right-4 bg-green-500 py-4 rounded-2xl flex-row items-center justify-center shadow-lg">
-            <Ionicons name="cart-outline" size={24} color="white" />
-            <Text className="ml-3 text-white text-lg font-bold">
-              {isBookingChef
-                ? 'Booking...'
-                : isBookingDone
-                ? 'Booking Confirmed'
-                : 'Pay Now'}
-            </Text>
-          </TouchableOpacity>
+              <Text className="ml-3 text-white text-lg font-bold">
+                {isBookingChef
+                  ? 'Booking...'
+                  : isBookingDone
+                  ? 'Booking Confirmed'
+                  : 'Pay Now'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </>
       )}
     </View>

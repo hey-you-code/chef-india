@@ -14,6 +14,8 @@ import WhosComingComponent from './WhosComingComponent';
 import WhatComponent from './WhatComponent';
 import {useDispatch, useSelector} from 'react-redux';
 import {setFormData} from '../../features/slices/chefbookingSlice';
+import {useGetAvailableChefsMutation} from '../../features/chefBook/chefBookingApiSlice';
+import {notify} from 'react-native-notificated';
 // import {createNotifications} from 'react-native-notificated';
 
 // const {useNotifications} = createNotifications();
@@ -32,7 +34,7 @@ const DummyComponent = () => {
 const FirstPage = ({navigation}) => {
   const {formData} = useSelector(state => state.chefBooking);
   const {user} = useSelector(state => state.user);
-  console.log('formData: ', formData);
+  // console.log('formData: ', formData);
   const dispatch = useDispatch();
 
   // const {notify} = useNotifications();
@@ -43,25 +45,27 @@ const FirstPage = ({navigation}) => {
 
   const calendarHeight = useRef(new Animated.Value(0)).current;
   const whoHeight = useRef(new Animated.Value(0)).current;
-  const whatHeight = useRef(new Animated.Value(320)).current;
+  const whatHeight = useRef(
+    new Animated.Value(formData.bookingType === 'regular' ? 250 : 300),
+  ).current;
+
+  const [getAvailableChefs, {isLoading: isFetchingAAvailableChefs}] =
+    useGetAvailableChefsMutation();
 
   useEffect(() => {
-    if (user?.user?.address?.houseNumber) {
-      // Only set if customerLocation is empty
-      if (!formData?.customerLocation?.houseNumber) {
-        dispatch(
-          setFormData({
-            field: 'customerLocation',
-            value: user?.user?.address,
-          }),
-        );
-      }
+    // if (user?.user?.address?.houseNumber) {
+    //   // Only set if customerLocation is empty
+    if (!formData?.customerLocation?.houseNumber) {
+      dispatch(
+        setFormData({
+          field: 'customerLocation',
+          value: user?.user?.address,
+        }),
+      );
     }
+    // }
 
-    if (
-      !formData?.customerInfo?.name ||
-      !formData?.customerInfo?.phoneNumber
-    ) {
+    if (!formData?.customerInfo?.name || !formData?.customerInfo?.phoneNumber) {
       dispatch(
         setFormData({
           field: 'customerInfo',
@@ -73,14 +77,13 @@ const FirstPage = ({navigation}) => {
         }),
       );
     }
-    
   }, []);
 
   // Expand the "When" section and collapse "Who" and "What"
   const expandWhenSection = () => {
     Animated.parallel([
       Animated.timing(calendarHeight, {
-        toValue: screenHeight * 0.65,
+        toValue: screenHeight * 0.8,
         duration: 300,
         useNativeDriver: false,
       }),
@@ -125,7 +128,7 @@ const FirstPage = ({navigation}) => {
   const expandWhatSection = () => {
     Animated.parallel([
       Animated.timing(whatHeight, {
-        toValue: 320, // Adjust as needed
+        toValue: formData.bookingType === 'regular' ? 250 : 300, // Adjust as needed
         duration: 300,
         useNativeDriver: false,
       }),
@@ -168,18 +171,14 @@ const FirstPage = ({navigation}) => {
   };
 
   const checkIfWhenComponentValid = () => {
-    // if(formData?.eveTimings)
-    if (!formData?.eventTimings) {
-      return false;
-    }
+    const {eventTimings, bookingType} = formData || {};
 
-    const startDate = formData?.eventTimings?.startDate;
+    if (!eventTimings || !eventTimings.startDate) return false;
 
-    if (startDate) {
-      return true;
-    }
+    // If bookingType is 'regular', also check for timeSlots
+    if (bookingType !== 'regular' && !eventTimings.timeSlots) return false;
 
-    return false;
+    return true;
   };
 
   const checkIfWhoComponentValid = () => {
@@ -223,6 +222,8 @@ const FirstPage = ({navigation}) => {
 
     return true;
   };
+
+  console.log("FormData: ", JSON.stringify(formData, null, 2));
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -279,43 +280,144 @@ const FirstPage = ({navigation}) => {
 
       {/* Where Tab for navigation */}
       <TouchableOpacity
-        onPress={() => {
+        onPress={async () => {
           if (!checkValidation()) {
-            // if(!checkIfWhoComponentValid()) {
-            // notify('error', {
-            //   params: {
-            //     description: 'Fill the missing values',
-            //     title: 'Missing Fields',
-            //   },
-            //   config: {
-            //     isNotch: true,
-            //     // notificationPosition: 'center',
-            //     // animationConfig: "SlideInLeftSlideOutRight",
-            //     // duration: 200,
-            //   },
-            // });
+            if (!checkIfWhatComponentValid()) {
+              notify('error', {
+                params: {
+                  description: 'Fill the type of event',
+                  title: 'Event Type Missing',
+                },
+                config: {
+                  isNotch: true,
+                  // notificationPosition: 'center',
+                  // animationConfig: "SlideInLeftSlideOutRight",
+                  // duration: 200,
+                },
+              });
+              return;
+            }
+
+            if (!checkIfWhenComponentValid()) {
+              notify('error', {
+                params: {
+                  description: 'Fill the date and time of the event',
+                  title: 'Date or Time Missing',
+                },
+                config: {
+                  isNotch: true,
+                  // notificationPosition: 'center',
+                  // animationConfig: "SlideInLeftSlideOutRight",
+                  // duration: 200,
+                },
+              });
+              return;
+            }
+
+            if (!checkIfWhoComponentValid()) {
+              notify('error', {
+                params: {
+                  description: 'Fill the number of guests',
+                  title: 'Number of guests missing',
+                },
+                config: {
+                  isNotch: true,
+                  // notificationPosition: 'center',
+                  // animationConfig: "SlideInLeftSlideOutRight",
+                  // duration: 200,
+                },
+              });
+              return;
+            }
+
             return;
-            // }
           }
+          //   if (!checkIfWhenComponentValid) {
+          //     notify('error', {
+          //       params: {
+          //         description: 'Fill the date and time of the event',
+          //         title: 'Date or Time Missing',
+          //       },
+          //       config: {
+          //         isNotch: true,
+          //         // notificationPosition: 'center',
+          //         // animationConfig: "SlideInLeftSlideOutRight",
+          //         // duration: 200,
+          //       },
+          //     });
+          //     return;
+          //   }
+          //   if (!checkIfWhoComponentValid()) {
+          //     notify('error', {
+          //       params: {
+          //         description: 'Fill the number of guests',
+          //         title: 'Number of guests missing',
+          //       },
+          //       config: {
+          //         isNotch: true,
+          //         // notificationPosition: 'center',
+          //         // animationConfig: "SlideInLeftSlideOutRight",
+          //         // duration: 200,
+          //       },
+          //     });
+          //     return;
+          //   }
+          // }
+
           if (formData?.bookingType === 'catering') {
             navigation.navigate('Catering');
             return;
           }
 
-          if (formData?.bookingType === 'regular') {
-            navigation.navigate('Checkout');
-            return;
+          console.log('eventTimings:', JSON.stringify({
+            customerLocation: formData?.customerLocation,
+            eventTimings: formData?.eventTimings,
+          }, null, 2));
+
+          try {
+            const response = await getAvailableChefs({
+              customerLocation: formData?.customerLocation,
+              eventTimings: formData?.eventTimings,
+            }).unwrap();
+
+            console.log('response: ', response?.data);
+
+            if (!response?.data?.chefExists) {
+              notify('error', {
+                params: {
+                  description: response?.data?.chefWithinLocation
+                    ? 'All Chefs are busy on this date'
+                    : 'No Chefs are available in this location',
+                  title: 'Chef Unavailable',
+                },
+                config: {
+                  isNotch: true,
+                  // notificationPosition: 'center',
+                  // animationConfig: "SlideInLeftSlideOutRight",
+                  // duration: 200,
+                },
+              });
+              return;
+            }
+
+            if (formData?.bookingType === 'regular') {
+              navigation.navigate('Checkout');
+              return;
+            }
+
+            if (formData?.bookingType === 'special') {
+              dispatch(setFormData({field: 'catering', value: false}));
+              navigation.navigate('UserMenu', {
+                actionApplicable: true,
+                menuType: 'special',
+                country: 'India',
+              });
+              return;
+            }
+          } catch (error) {
+            console.log('error: ', error);
           }
 
-          if (formData?.bookingType === 'special') {
-            dispatch(setFormData({field: 'catering', value: false}));
-            navigation.navigate('UserMenu', {
-              actionApplicable: true,
-              menuType: 'special',
-              country: 'India',
-            });
-            return;
-          }
           // navigation.navigate('Map');
         }}
         style={{
@@ -333,7 +435,9 @@ const FirstPage = ({navigation}) => {
         }}
         className={checkValidation() ? 'bg-red-500' : 'bg-red-500/60'}>
         {/* <Text style={styles.whenText}>Next</Text> */}
-        <Text className="text-white text-[22px] text-center">Next</Text>
+        <Text className="text-white text-[22px] text-center">
+          {isFetchingAAvailableChefs ? 'Checking...' : 'Next'}
+        </Text>
       </TouchableOpacity>
 
       {/* Spacer at the bottom */}

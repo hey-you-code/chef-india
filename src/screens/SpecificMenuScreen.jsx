@@ -13,7 +13,7 @@ import Menu from '../components/Menu/Menu';
 import {useFocusEffect, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useDispatch, useSelector} from 'react-redux';
-import { resetMenu } from '../features/slices/chefbookingSlice';
+import {resetMenu} from '../features/slices/chefbookingSlice';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
@@ -91,25 +91,36 @@ const SpecificMenuScreen = ({navigation}) => {
               navigation.navigate('SpecialCheckout');
             }}
             style={{zIndex: 999, alignSelf: 'center'}}
-            className="bg-green-500 absolute bottom-12 rounded-[16px] flex-row items-center justify-start w-[90%] py-4 px-6 space-x-4">
-            <Ionicons name="cart" size={24} color="white" />
-            <Text className="text-white text-xl font-semibold">
-              Check Out{' '}
-              <Text className="">{formData?.menu?.items?.length}</Text> Items
-            </Text>
-            <View className="absolute w-[60px] h-full right-12 top-3">
+            className="bg-green-500 absolute bottom-12 rounded-full flex-row items-center justify-between w-[70%] py-2 px-2 ">
+            {/* Left - Stacked Images */}
+            <View className="relative flex-row items-center w-[80px] h-[40px]">
               {formData?.menu?.items?.slice(0, 3).map((item, index) => (
-                <View key={item.id} className="">
-                  {item?.itemImage && (
-                    <Image
-                      key={item?.id}
-                      source={{uri: item?.itemImage}}
-                      style={{left: 2 + index * 20}}
-                      className="h-[40px] w-[40px] rounded-full absolute border-2 border-white"
-                    />
-                  )}
-                </View>
+                <Image
+                  key={item?.id}
+                  source={{uri: item?.itemImage}}
+                  style={{
+                    left: index * 20,
+                    borderWidth: 2, // Explicitly define the border width
+                    borderColor: '#22c55e',
+                  }}
+                  className="h-[50px] w-[50px] rounded-full absolute border-2 "
+                />
               ))}
+            </View>
+
+            {/* Right - Text and Cart Icon */}
+            <View className="flex-1 flex-row justify-between items-center px-2 pl-4">
+              <Text
+                style={{fontFamily: ''}}
+                className="text-white text-lg font-medium">
+                CHECK OUT{'\n'}
+                <Text className="text-sm tracking-wider uppercase font-normal">
+                  {formData?.menu?.items?.length} Items
+                </Text>
+              </Text>
+              <View className="bg-white h-[45px] w-[45px] items-center justify-center rounded-full">
+                <Ionicons name="chevron-forward" size={24} color="#22c55e" />
+              </View>
             </View>
           </TouchableOpacity>
         )}

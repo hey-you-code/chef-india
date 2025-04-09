@@ -36,6 +36,7 @@ import {
 } from '../utils/utilityFunctions';
 import {useUpdateAddressMutation} from '../features/auth/authApiSlice';
 import {setUser} from '../features/slices/userSlice';
+import LottieView from 'lottie-react-native';
 
 const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
@@ -48,9 +49,11 @@ const MapScreen = ({navigation}) => {
   const {user} = useSelector(state => state.user);
   const dispatch = useDispatch();
 
+  const [isRegionChanging, setIsRegionChanging] = useState(false);
+
   // console.log('formData1: ', formData);
 
-  const {address} = user?.user;
+  const {address = {}} = user?.user;
 
   // console.log("addressss:", address)
 
@@ -72,8 +75,6 @@ const MapScreen = ({navigation}) => {
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
-
-
 
   const [fetchingCurrentLocation, setFetchingCurrentLocation] = useState(false);
 
@@ -204,6 +205,7 @@ const MapScreen = ({navigation}) => {
         user={user}
         dispatch={dispatch}
         closeBottomSheet={closeBottomSheet}
+        navigation={navigation}
       />,
       ['25%', '75%'],
       'MAPSCREEN',
@@ -212,7 +214,11 @@ const MapScreen = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent={true} barStyle="dark-content" />
+      <StatusBar
+        translucent={true}
+        barStyle="dark-content"
+        backgroundColor={'transparent'}
+      />
       <View
         className="space-x-4"
         style={{
@@ -349,37 +355,61 @@ const MapScreen = ({navigation}) => {
         ref={mapRef}
         style={styles.map}
         provider={PROVIDER_GOOGLE}
-        onRegionChange={newRegion => setRegion(newRegion)}
-        onRegionChangeComplete={newRegion =>
-          fetchAddressDetails(newRegion.latitude, newRegion.longitude)
-        }
+        onRegionChange={useCallback(newRegion => {
+          console.log('Changing region...');
+          // setIsRegionChanging(true);
+
+          // Only update state if the change is significant
+          setRegion(prevRegion => {
+            const distanceMoved =
+              Math.abs(prevRegion.latitude - newRegion.latitude) +
+              Math.abs(prevRegion.longitude - newRegion.longitude);
+            return distanceMoved > 0.0001 ? newRegion : prevRegion;
+          });
+        }, [])}
+        onRegionChangeComplete={useCallback(newRegion => {
+          fetchAddressDetails(newRegion.latitude, newRegion.longitude);
+          // setIsRegionChanging(false);
+        }, [])}
         loadingIndicatorColor="#FF3130"
         loadingBackgroundColor="#fff">
-        <Marker
-          coordinate={{
-            latitude: region.latitude,
-            longitude: region.longitude,
-          }}
-          title="Current Location"
-          description="This is your location">
-          <Image
-            source={require('../../assets/marker_pin.png')}
-            style={{width: 40, height: 40}}
-          />
-        </Marker>
-        <Circle
-          center={{
-            latitude: region.latitude,
-            longitude: region.longitude,
-          }}
-          radius={100}
-          strokeColor="rgba(0,112,255,0.5)"
-          fillColor="rgba(0,112,255,0.2)"
-        />
+        {/* Memoized Marker */}
+        {useMemo(
+          () => (
+            <Marker
+              coordinate={{
+                latitude: region.latitude,
+                longitude: region.longitude,
+              }}
+              title="Current Location"
+              description="This is your location">
+              <Image
+                source={require('../../assets/marker_pin.png')}
+                style={{width: 40, height: 40}}
+              />
+            </Marker>
+          ),
+          [region.latitude, region.longitude],
+        )}
+
+        {/* Memoized Circle */}
+        {useMemo(
+          () => (
+            <Circle
+              center={{
+                latitude: region.latitude,
+                longitude: region.longitude,
+              }}
+              radius={100}
+              strokeColor="rgba(0,112,255,0.5)"
+              fillColor="rgba(0,112,255,0.2)"
+            />
+          ),
+          [region.latitude, region.longitude],
+        )}
       </MapView>
 
       {/* Use Current Location Button */}
-
       <TouchableOpacity
         onPress={getCurrentLocation}
         style={styles.currentLocationButton}>
@@ -391,85 +421,98 @@ const MapScreen = ({navigation}) => {
             style={{marginRight: 8}}
           />
           <Text style={styles.currentLocationText}>
-            {fetchingCurrentLocation ? 'loading...' : 'Use Current Location'}
+            {fetchingCurrentLocation ? 'Loading...' : 'Use Current Location'}
           </Text>
         </View>
       </TouchableOpacity>
-
-      <View style={styles.addressDetailsContainer}>
-        {formData?.customerLocation ? (
-          <>
-            <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
-              {region.description
-                ? region.description
-                : formData?.customerLocation?.location?.locationName || ''}{' '}
-              {formData?.customerLocation?.sublocalityLevel2 ||
-                formData?.customerLocation?.sublocalityLevel1 ||
-                formData?.customerLocation?.locality ||
-                ''}
-            </Text>
-            <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
-              {formData?.customerLocation?.city || ''}{' '}
-              {formData?.customerLocation?.state || ''}{' '}
-              {formData?.customerLocation?.postalCode || ''}
-            </Text>
-          </>
-        ) : (
-          <>
-            <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
-              {address?.sublocalityLevel2 ||
-                address?.sublocalityLevel1 ||
-                address?.locality ||
-                ''}
-            </Text>
-            <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
-              {address?.city || ''} {address?.state || ''}{' '}
-              {address?.postalCode || ''}
-            </Text>
-          </>
-        )}
-        {!OPERATED_STATES.includes(formData?.customerLocation?.state) ? (
-          <View
-            style={{
-              marginTop: 16,
-              backgroundColor: '#FF3130',
-              paddingVertical: 14,
-              borderRadius: 16,
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Text style={{color: 'white', fontSize: 18, fontWeight: '500'}}>
-              Oops we are not here yet!
-            </Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            onPress={() => {
-              console.log('r1');
-              handlePress();
-            }}
-            style={{
-              marginTop: 16,
-              backgroundColor: '#FF3130',
-              paddingVertical: 14,
-              borderRadius: 16,
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Text style={{color: 'white', fontSize: 18, fontWeight: '500'}}>
-              Add more address details
-            </Text>
-            <Ionicons
-              name="chevron-forward-outline"
-              size={20}
-              color="white"
-              style={{marginLeft: 8}}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
+      {isRegionChanging ? (
+        <View
+          className="items-center justify-center"
+          style={styles.addressDetailsContainer}>
+          <LottieView
+            source={require('../../assets/animation/loading_animation.json')} // Replace with your Lottie file
+            autoPlay
+            loop
+            style={{width: 400, height: 100}}
+          />
+        </View>
+      ) : (
+        <View style={styles.addressDetailsContainer}>
+          {formData?.customerLocation ? (
+            <>
+              <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
+                {region.description
+                  ? region.description
+                  : formData?.customerLocation?.location?.locationName ||
+                    ''}{' '}
+                {formData?.customerLocation?.sublocalityLevel2 ||
+                  formData?.customerLocation?.sublocalityLevel1 ||
+                  formData?.customerLocation?.locality ||
+                  ''}
+              </Text>
+              <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
+                {formData?.customerLocation?.city || ''}{' '}
+                {formData?.customerLocation?.state || ''}{' '}
+                {formData?.customerLocation?.postalCode || ''}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={{fontSize: 18, fontWeight: '600', color: '#333'}}>
+                {address?.sublocalityLevel2 ||
+                  address?.sublocalityLevel1 ||
+                  address?.locality ||
+                  ''}
+              </Text>
+              <Text style={{fontSize: 14, color: '#666', marginTop: 4}}>
+                {address?.city || ''} {address?.state || ''}{' '}
+                {address?.postalCode || ''}
+              </Text>
+            </>
+          )}
+          {!OPERATED_STATES.includes(formData?.customerLocation?.state) ? (
+            <View
+              style={{
+                marginTop: 16,
+                backgroundColor: '#FF3130',
+                paddingVertical: 14,
+                borderRadius: 16,
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Text style={{color: 'white', fontSize: 18, fontWeight: '500'}}>
+                Oops we are not here yet!
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={() => {
+                console.log('r1');
+                handlePress();
+              }}
+              style={{
+                marginTop: 16,
+                backgroundColor: '#FF3130',
+                paddingVertical: 14,
+                borderRadius: 16,
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Text style={{color: 'white', fontSize: 18, fontWeight: '500'}}>
+                Add more address details
+              </Text>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={20}
+                color="white"
+                style={{marginLeft: 8}}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 };
@@ -549,18 +592,23 @@ const styles = StyleSheet.create({
   },
 });
 
-const BottomSheetContent = ({
-  addressType,
-  setAddressType,
+export const BottomSheetContent = ({
+  fromMapScreen = true,
   closeBottomSheet,
   handleNavigation,
+  navigation,
 }) => {
   const dispatch = useDispatch();
   const {user} = useSelector(state => state.user);
   const {formData} = useSelector(state => state.chefBooking);
 
   useEffect(() => {
-    if (user && user.user && !formData?.customerInfo?.name && !formData?.customerInfo?.phoneNumber) {
+    if (
+      user &&
+      user.user &&
+      !formData?.customerInfo?.name &&
+      !formData?.customerInfo?.phoneNumber
+    ) {
       dispatch(
         setFormData({
           field: 'customerInfo',
@@ -603,8 +651,6 @@ const BottomSheetContent = ({
     return true;
   };
 
- 
-
   const [updateAddress, {isLoading: isUpdatingAddress}] =
     useUpdateAddressMutation();
 
@@ -627,6 +673,12 @@ const BottomSheetContent = ({
           value: response?.data?.user?.address,
         }),
       );
+
+      if (!fromMapScreen) {
+        console.log('r1');
+        closeBottomSheet();
+        return;
+      }
 
       handleNavigation();
     } catch (error) {
@@ -659,30 +711,23 @@ const BottomSheetContent = ({
         />
 
         <View className="relative flex-row items-center">
-          <TextInput
-            value={
-              formData?.customerLocation?.location?.locationName ||
+          <Text className="bg-gray-100 p-4 rounded-xl text-lg flex-1 pr-20 text-gray-700">
+            {formData?.customerLocation?.location?.locationName ||
               formData?.customerLocation?.sublocalityLevel2 ||
               formData?.customerLocation?.sublocalityLevel1 ||
               formData?.customerLocation?.locality ||
-              ''
-            }
-            onChangeText={text =>
-              dispatch(
-                setFormData({
-                  field: 'customerLocation',
-                  subfield: 'location',
-                  subfield2: 'locationName',
-                  value: text,
-                }),
-              )
-            }
-            placeholder="Location Name"
-            placeholderTextColor="#888"
-            className="bg-gray-100 p-4 rounded-xl text-lg flex-1 pr-20 text-gray-700"
-          />
+              ''}
+          </Text>
           <TouchableOpacity
-            onPress={() => closeBottomSheet()}
+            onPress={() => {
+              if (!fromMapScreen) {
+                closeBottomSheet();
+                navigation.navigate('Map');
+                return;
+              }
+              closeBottomSheet();
+              return;
+            }}
             className="absolute right-2 bg-red-500 rounded-lg px-4 py-2">
             <Text className="text-white text-sm font-medium">Change</Text>
           </TouchableOpacity>

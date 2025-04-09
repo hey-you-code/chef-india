@@ -69,6 +69,7 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({
     newType: string = "",
     newHeader: ReactNode = null,
     newFooter: ReactNode = null,
+
   ) => {
     setBottomSheetType(newType);
     setBottomSheetContent(newContent);
@@ -177,19 +178,6 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({
            <View style={{height: 50}} />
           </BottomSheetScrollView>
         </View>
-        {/* <BottomSheetTextInput
-            style={{
-              marginTop: 8,
-              marginBottom: 10,
-              borderRadius: 10,
-              fontSize: 16,
-              lineHeight: 20,
-              padding: 8,
-              backgroundColor: 'rgba(151, 151, 151, 0.25)',
-              position: 'absolute',
-              bottom: 0,
-            }}
-          /> */}
       </BottomSheet>
      
     </BottomSheetContext.Provider>

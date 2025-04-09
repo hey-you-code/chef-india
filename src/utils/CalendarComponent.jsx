@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import { useDispatch, useSelector } from 'react-redux';
-import { setFormData } from '../features/slices/chefbookingSlice';
+import {View, Text, StyleSheet} from 'react-native';
+import {Calendar} from 'react-native-calendars';
+import {useDispatch, useSelector} from 'react-redux';
+import {setFormData} from '../features/slices/chefbookingSlice';
 
 // Helper functions to get dates in local format
 const getTodayDate = () => {
@@ -24,17 +24,23 @@ const getTomorrowDate = () => {
 
 const CalendarComponent = () => {
   const dispatch = useDispatch();
-  const { formData } = useSelector((state) => state.chefBooking);
+  const {formData} = useSelector(state => state.chefBooking);
   // Retrieve the eventTimings (startDate and endDate) from global state.
-  const { startDate, endDate } = formData?.eventTimings || {};
+  const {startDate, endDate} = formData?.eventTimings || {};
+
+  const bookingType = formData?.bookingType;
 
   // Update the global state with the new eventTimings.
   const updateEventTimings = (start, end) => {
     dispatch(
       setFormData({
         field: 'eventTimings',
-        value: { startDate: start, endDate: end },
-      })
+        value: {
+          ...formData?.eventTimings,
+          startDate: start,
+          endDate: end,
+        },
+      }),
     );
   };
 
@@ -42,11 +48,16 @@ const CalendarComponent = () => {
   // - If no startDate or a full range is already selected, set the pressed day as the new startDate.
   // - Otherwise, if the pressed day is after the current startDate, set it as the endDate.
   // - If the pressed day is before (or equal to) the startDate, restart the selection.
-  const handleDayPress = (day) => {
-    if (!startDate || (startDate && endDate)) {
+
+  const handleDayPress = day => {
+    if (bookingType === 'catering' || bookingType === 'special') {
+      // Single date selection for catering/special booking
       updateEventTimings(day.dateString, null);
     } else {
-      if (new Date(day.dateString) > new Date(startDate)) {
+      // Range selection for other bookings
+      if (!startDate || (startDate && endDate)) {
+        updateEventTimings(day.dateString, null);
+      } else if (new Date(day.dateString) > new Date(startDate)) {
         updateEventTimings(startDate, day.dateString);
       } else {
         updateEventTimings(day.dateString, null);
@@ -68,7 +79,12 @@ const CalendarComponent = () => {
       };
     }
 
-    if (startDate && endDate) {
+    if (
+      startDate &&
+      endDate &&
+      bookingType !== 'catering' &&
+      bookingType !== 'special'
+    ) {
       // For a range selection, mark all dates between startDate and endDate.
       let currentDate = new Date(startDate);
       const lastDate = new Date(endDate);
@@ -97,19 +113,19 @@ const CalendarComponent = () => {
     }
 
     // Mark today's date as disabled.
-    const today = getTodayDate();
-    markedDates[today] = {
-      disabled: true,
-      disableTouchEvent: true,
-      customStyles: {
-        text: { color: '#d9e1e8' },
-      },
-    };
+    // const today = getTodayDate();
+    // markedDates[today] = {
+    //   disabled: true,
+    //   disableTouchEvent: true,
+    //   customStyles: {
+    //     text: {color: '#d9e1e8'},
+    //   },
+    // };
 
     return markedDates;
   };
 
-  const minDate = getTomorrowDate();
+  const minDate = getTodayDate();
 
   return (
     <View style={styles.container}>

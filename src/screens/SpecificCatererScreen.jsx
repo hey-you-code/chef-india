@@ -1,18 +1,49 @@
-import {View, Text, Image, TouchableOpacity, Dimensions, SafeAreaView} from 'react-native';
-import React from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  SafeAreaView,
+} from 'react-native';
+import React, {useMemo, useState} from 'react';
 import {useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Menu from '../components/Menu/Menu';
-import { useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {useGetMenuQuery} from '../features/menu/menuApiSlice';
+import { resetMenu } from '../features/slices/chefbookingSlice';
 
 const {width, height} = Dimensions.get('window');
 
 const SpecicCatererScreen = ({navigation}) => {
-  const {formData} = useSelector(state => state.chefBooking)
-  // const route = useRoute();
-  // const {} = route.params || {}
+  const {formData} = useSelector(state => state.chefBooking);
+  const dispatch = useDispatch();
+  const route = useRoute();
+  const {name, image} = route.params || {};
+  const [page, setPage] = useState(1);
+  const limit = 5;
+
+  const menuType = `Catering-${name}`;
+  const country = 'India';
+
+  const queryParams = useMemo(
+    () => ({menuType, country, page, limit}),
+    [menuType, country, page, limit],
+  );
+
+  // Fetch menu items from API
+  const {
+    data: menuData,
+    error,
+    isLoading,
+    isFetching,
+  } = useGetMenuQuery(queryParams, {
+    // skip: (preview = false || (page === 1 && menuItems.length > 0)),
+  });
+
   return (
-    <View  style={{width: width, flex: 1, backgroundColor: "white"}}>
+    <View style={{width: width, flex: 1, backgroundColor: 'white'}}>
       <View className="w-full h-[20%] relative">
         <View
           className="space-x-4"
@@ -26,7 +57,9 @@ const SpecicCatererScreen = ({navigation}) => {
             alignItems: 'center',
           }}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              dispatch(resetMenu());
+              navigation.goBack()}}
             className="bg-white rounded-full"
             style={{
               width: 40,
@@ -37,51 +70,65 @@ const SpecicCatererScreen = ({navigation}) => {
             <Ionicons name="arrow-back" color={'black'} size={24} />
           </TouchableOpacity>
           <Text style={{fontFamily: 'Anton'}} className="text-3xl text-white">
-            PATEL CATERINGS
+            {name}
           </Text>
         </View>
-        <View style={{position: 'absolute', inset: 0, zIndex: 10}} className="bg-black/40" />
+        <View
+          style={{position: 'absolute', inset: 0, zIndex: 10}}
+          className="bg-black/40"
+        />
         <Image
           source={{
-            uri: 'https://i.pinimg.com/736x/7a/2e/6f/7a2e6f3168389da97ede6279f9c89aaf.jpg',
+            uri: image ?? 'https://i.pinimg.com/736x/7a/2e/6f/7a2e6f3168389da97ede6279f9c89aaf.jpg',
           }}
           className="h-full w-full"
         />
       </View>
       <View className="flex-1  z-20 rounded-t-3xl bg-white top-[-20px]">
-      <Menu
-            menuType={"special"}
-            country={"India"}
-            actionApplicable={true}
-            preview={false}
-          />
+        <Menu
+          menuType={menuType}
+          country={country}
+          actionApplicable={true}
+          preview={false}
+        />
 
-{formData?.menu?.items?.length > 0 && (
+        {formData?.menu?.items?.length > 0 && (
           <TouchableOpacity
             onPress={() => {
               console.log('Checkout: ', JSON.stringify(formData, null, 2));
               navigation.navigate('SpecialCheckout');
             }}
             style={{zIndex: 999, alignSelf: 'center'}}
-            className="bg-green-500 absolute bottom-12 rounded-[16px] flex-row items-center justify-start w-[90%] py-4 px-6 space-x-4">
-            <Ionicons name="cart" size={24} color="white" />
-            <Text className="text-white text-xl font-semibold">
-              Check Out{' '}
-              <Text className="">{formData?.menu?.items?.length}</Text> Items
-            </Text>
-            <View className="absolute w-[60px] h-full right-12 top-3">
+            className="bg-green-500 absolute bottom-12 rounded-full flex-row items-center justify-between w-[70%] py-2 px-2 ">
+            {/* Left - Stacked Images */}
+            <View className="relative flex-row items-center w-[80px] h-[40px]">
               {formData?.menu?.items?.slice(0, 3).map((item, index) => (
-                <View key={item.id} className="">
-                  {item?.itemImage && (
-                    <Image
-                      key={item?.id}
-                      source={{uri: item?.itemImage}}
-                      style={{left: 2 + index * 20}}
-                      className="h-[40px] w-[40px] rounded-full absolute border-2 border-white"
-                    />
-                  )}
-                </View>
+                <Image
+                  key={item?.id}
+                  source={{uri: item?.itemImage}}
+                  style={{
+                    left: index * 20,
+                    borderWidth: 2, // Explicitly define the border width
+                    borderColor: '#22c55e',
+                  }}
+                  className="h-[50px] w-[50px] rounded-full absolute border-2 "
+                />
               ))}
+            </View>
+
+            {/* Right - Text and Cart Icon */}
+            <View className="flex-1 flex-row justify-between items-center px-2 pl-4">
+              <Text
+                style={{fontFamily: ''}}
+                className="text-white text-lg font-medium">
+                CHECK OUT{'\n'}
+                <Text className="text-sm tracking-wider uppercase font-normal">
+                  {formData?.menu?.items?.length} Items
+                </Text>
+              </Text>
+              <View className="bg-white h-[45px] w-[45px] items-center justify-center rounded-full">
+                <Ionicons name="chevron-forward" size={24} color="#22c55e" />
+              </View>
             </View>
           </TouchableOpacity>
         )}

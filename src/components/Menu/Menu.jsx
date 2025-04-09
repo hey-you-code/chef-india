@@ -122,6 +122,7 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
         setFilteredItems(items);
       } catch (error) {
         console.error('Error filtering menu:', error);
+        setFilteredItems([]);
       }
     }
   };
@@ -192,7 +193,7 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
     );
   };
 
-  console.log('items: ', JSON.stringify(formData?.menu?.items, null, 2));
+  // console.log('items: ', JSON.stringify(formData?.menu?.items, null, 2));
 
   return (
     <View style={{flex: 1}}>
@@ -298,8 +299,8 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
 
         {/* Error handling for search */}
         {searchError && searchQuery.trim() !== '' && (
-          <Text style={{color: 'red', marginVertical: 8}}>
-            Error fetching suggestions
+          <Text style={{color: 'gray', marginVertical: 8}}>
+            NO MATCHING ITEMS
           </Text>
         )}
 
@@ -314,9 +315,7 @@ const Menu = ({actionApplicable, menuType, country, preview = true}) => {
 
         {/* Error handling for filtering */}
         {filterError && activeFilter && (
-          <Text style={{color: 'red', marginVertical: 8}}>
-            Error fetching filtered results
-          </Text>
+          <Text style={{color: 'gray', marginVertical: 8}}>NO ITEMS</Text>
         )}
       </View>
 

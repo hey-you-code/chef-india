@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Entypoicons from 'react-native-vector-icons/Entypo';
 import bookchef from '../../assets/bookchef.png';
 import exploremenu from '../../assets/exploremenu.png';
 import Banner from '../components/Home/Banner';
@@ -26,6 +27,9 @@ import {
   fetchCurrentLocation,
 } from '../utils/utilityFunctions';
 import {setUser} from '../features/slices/userSlice';
+import LottieView from 'lottie-react-native';
+
+const OPERATED_STATES = ['Assam', 'Telangana'];
 
 const HomeScreen = ({navigation}) => {
   const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
@@ -64,7 +68,7 @@ const HomeScreen = ({navigation}) => {
 
       const {address} = await reverseGeoCoding(latitude, longitude);
 
-      console.log("address:", address);
+      // console.log('address:', address);
 
       if (!address) {
         return null;
@@ -99,24 +103,55 @@ const HomeScreen = ({navigation}) => {
   };
 
   useEffect(() => {
-    if (!user?.user?.address) {
+    if (user && !user?.user?.address) {
       getCurrentLocation();
     }
   }, [user]);
 
-  console.log('userrr: ', user);
+  console.log("user: ", user);
 
-  console.log('loggedInUser: ', user?.user?.name[0]);
+  // console.log('userrr: ', user);
+
+  if (user && !OPERATED_STATES.includes(user?.user?.address?.state)) {
+    return (
+      <SafeAreaView className="flex-1 bg-white px-6">
+        <View className="flex-1  items-center">
+          <LottieView
+            source={require('../../assets/animation/unavailable_location.json')} // Replace with your Lottie file
+            autoPlay
+            loop
+            style={{width: 300, height: 300}}
+          />
+
+          {/* Title */}
+          <Text className="text-3xl font-bold text-gray-800 mt-6 text-center">
+            Not available
+          </Text>
+
+          {/* Description */}
+          <Text className="text-lg text-gray-600 mt-4 text-center">
+            Sorry! Chef India is not in your area yet, We will be there soon.
+            Try changing your location.
+          </Text>
+
+          {/* Map Button */}
+          <TouchableOpacity
+            className="bg-red-500 px-8 py-4 rounded-2xl mt-8"
+            onPress={() => navigation.navigate('Map')}>
+            <Text className="text-white text-lg font-semibold">
+              Set location Manually
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+
+
+
   return (
     <SafeAreaView className="flex-1 bg-white">
-      {/* <LinearGradient
-        colors={['#FF3130', 'white']}
-        start={{x: 0, y: 0}}
-        end={{x: 0, y: 1}}
-        style={{paddingHorizontal: 10}}
-        className="absolute w-screen h-[100px]"
-      /> */}
-      {/* Header */}
       <ImageBackground
         source={{
           uri: 'https://i.pinimg.com/736x/1f/cc/d1/1fccd1628330a657b5a9c364661d9fb0.jpg',
@@ -138,21 +173,32 @@ const HomeScreen = ({navigation}) => {
             {/* <Text className="text-3xl font-bold text-black">Cheff India</Text> */}
             <Image source={logo} className="h-[30px] w-[160px]" />
           </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Profile')}
-            className="px-2 max-w-[80%]">
-            {user ? (
-              <View className="h-[40px] w-[40px]  bg-black/90 rounded-full items-center justify-center">
-                <Text
-                  ellipsizeMode="tail"
-                  className="text-[#FFF] text-center text-xl font-bold">
-                  {user.user?.name[0]}
-                </Text>
-              </View>
-            ) : (
-              <Ionicons name="person-circle" color="#525252" size={40} />
+          <View className="flex-row items-center space-x-2">
+            {user && (
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('Notifications');
+                }}
+                className="px-2 max-w-[80%]">
+                <Ionicons name="notifications" color="black" size={32} />
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Profile')}
+              className=" max-w-[80%] mx-2">
+              {user ? (
+                <View className="h-[40px] w-[40px]  bg-black/90 rounded-full items-center justify-center">
+                  <Text
+                    ellipsizeMode="tail"
+                    className="text-[#FFF] text-center text-xl font-bold">
+                    {user.user?.name[0]}
+                  </Text>
+                </View>
+              ) : (
+                <Ionicons name="person-circle" color="#525252" size={40} />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         <TouchableOpacity
@@ -160,7 +206,7 @@ const HomeScreen = ({navigation}) => {
             navigation.navigate('Map');
           }}
           className="flex-row  items-start mx-2 my-2">
-          {user?.user?.address ? (
+          {user?.user && user?.user?.address ? (
             <View>
               <Text
                 style={{fontFamily: 'Roboto Regular'}}
@@ -204,13 +250,18 @@ const HomeScreen = ({navigation}) => {
               Fetching...
             </Text>
           ) : (
-            <Text
-              style={{fontFamily: 'Roboto Regular'}}
-              className="text-gray-500">
-              Select Manually
-            </Text>
+            <></>
+            // <Text
+            //   style={{fontFamily: 'Roboto Regular'}}
+            //   className="text-gray-500">
+            //   Select Manually
+            // </Text>
           )}
-          <Ionicons name="chevron-down" size={20} color={'#9ca3af'} />
+          {user?.user && (
+            <View>
+              <Ionicons name="chevron-down" size={20} color={'#9ca3af'} />
+            </View>
+          )}
         </TouchableOpacity>
 
         <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
@@ -225,7 +276,6 @@ const HomeScreen = ({navigation}) => {
                 activeOpacity={0.5}
                 style={{}}
                 className=" w-[43%] bg-gray-200  h-[240px] relative rounded-2xl justify-end">
-                {/* <View className="absolute bg-black/40 inset-0 z-20 h-full w-full " /> */}
                 <Image
                   className=" h-[100%] w-[100%] absolute mx-auto overflow-hidden rounded-2xl"
                   source={{

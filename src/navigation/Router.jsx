@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import AppStack from './AppStack';
+
 import {useDispatch, useSelector} from 'react-redux';
 import AuthStack from './AuthStack';
 import {
@@ -24,6 +24,8 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
+import BookingsScreen from '../screens/BookingsScreen';
+import AppStack from './AppStack';
 
 // This is the default configuration
 configureReanimatedLogger({
@@ -50,7 +52,7 @@ const Router = () => {
       try {
         const response = await refreshAccessToken().unwrap();
         // console.log('r1');
-        // console.log('acessToken response: ', response.data);
+        console.log('acessToken response: ', response.data);
 
         dispatch(
           setUser({

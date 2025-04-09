@@ -23,6 +23,8 @@ import BusinessBookingScreen from '../screens/BusinessBookingScreen';
 import BookingConfirmation from '../screens/BookingConfirmationScreen';
 import CateringScreen from '../screens/CateringScreen';
 import SpecicCatererScreen from '../screens/SpecificCatererScreen';
+import BookingsScreen from '../screens/BookingsScreen';
+import NotificationScreen from '../screens/NotificationScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -207,7 +209,17 @@ const AppStack = () => {
       <Stack.Screen
         name="SpecificCaterer"
         component={SpecicCatererScreen}
-        options={{headerShown: false}}
+        options={{headerShown: false,  animation: 'slide_from_right'}}
+      />
+      <Stack.Screen
+        name="Bookings"
+        component={BookingsScreen}
+        options={{headerShown: false,  animation: 'slide_from_right'}}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationScreen}
+        options={{headerShown: false,  animation: 'slide_from_right'}}
       />
     </Stack.Navigator>
   );

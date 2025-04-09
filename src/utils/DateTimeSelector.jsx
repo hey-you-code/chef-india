@@ -6,6 +6,7 @@ import {
   Animated,
   StyleSheet,
   Dimensions,
+  Pressable,
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import CalendarComponent from './CalendarComponent';
@@ -13,6 +14,8 @@ import {useDispatch, useSelector} from 'react-redux';
 import {setFormData} from '../features/slices/chefbookingSlice';
 
 const {width: screenWidth} = Dimensions.get('window');
+
+const timeSlots = ['Morning', 'Afternoon', 'Evening', 'Full Day'];
 
 const DateTimeSelector = ({onNext}) => {
   const dispatch = useDispatch();
@@ -32,6 +35,11 @@ const DateTimeSelector = ({onNext}) => {
   // Helper to update Redux state for time selections.
   const appendToForm = (field, subfield, value) => {
     dispatch(setFormData({field, subfield, value}));
+  };
+
+  const handleSelect = slot => {
+    const formattedSlot = slot.toLowerCase().replace(/\s+/g, '');
+    appendToForm('eventTimings', 'timeSlots', [formattedSlot]);
   };
 
   const handleStartTimeChange = newTime => {
@@ -79,26 +87,45 @@ const DateTimeSelector = ({onNext}) => {
     }
   };
 
+  // console.log("selected: ", formData?.eventTimings?.timeSlots[0])
+
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.animatedContainer,
-          {
-            width: screenWidth * (formData?.bookingType === 'regular' ? 1 : 3),
-            transform: [{translateX}],
-          },
-        ]}>
-        {/* Tab 1: Calendar */}
-        <View style={styles.tab}>
-          {/* CalendarComponent now uses global state; no props needed */}
-          <CalendarComponent />
+      <View style={styles.tab}>
+        {/* CalendarComponent now uses global state; no props needed */}
+        <CalendarComponent />
 
-          <View style={styles.buttonContainer}>
+        {formData?.bookingType !== 'regular' && (
+          <View className="flex-row justify-between space-x-2 pt-3 rounded-xl">
+            {timeSlots.map((slot, index) => {
+              const formattedSlot = slot.toLowerCase().replace(/\s+/g, '');
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => handleSelect(slot)}
+                  className={`flex-1 py-2  rounded-md items-center justify-center ${
+                    formData?.eventTimings?.timeSlots?.includes(formattedSlot)
+                      ? 'bg-black'
+                      : 'bg-gray-200'
+                  }`}>
+                  <Text
+                    className={`text-xs font-semibold ${
+                      formData?.eventTimings?.timeSlots?.includes(formattedSlot)
+                        ? 'text-white'
+                        : 'text-black'
+                    }`}>
+                    {slot}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
+        <View style={styles.buttonContainer}>
+          {formData?.bookingType === 'regular' ? (
             <TouchableOpacity
-              onPress={
-                formData?.bookingType === 'regular' ? onNext : goToNextTab
-              }
+              onPress={onNext}
               disabled={!selectedDate}
               style={[
                 styles.nextButton,
@@ -106,81 +133,20 @@ const DateTimeSelector = ({onNext}) => {
               ]}>
               <Text style={styles.nextButtonText}>Next</Text>
             </TouchableOpacity>
-          </View>
+          ) : (
+            <TouchableOpacity
+              onPress={onNext}
+              disabled={!selectedDate || !eventTimings['timeSlots']}
+              style={[
+                styles.nextButton,
+                (!selectedDate || !eventTimings['timeSlots']) &&
+                  styles.disabledButton,
+              ]}>
+              <Text style={styles.nextButtonText}>Next</Text>
+            </TouchableOpacity>
+          )}
         </View>
-
-        {formData?.bookingType !== 'regular' && (
-          <>
-            {/* Tab 2: Start Time */}
-            <View style={styles.tab}>
-              <Text style={styles.title}>Select Start Time</Text>
-              <DatePicker
-                date={selectedStartTime}
-                onDateChange={handleStartTimeChange}
-                mode="time"
-                style={[styles.datePicker]} // Red background
-                textColor="#00" // White text for contrast
-                theme="light" // Ensures light theme (if supported by library)
-                // For Android spinner style:
-                is24hourSource="device"
-                dividerHeight={1}
-                // dividerColor="#ff0000"
-                // For iOS:
-                modalProps={{
-                  buttonTextColorIOS: '#ff0000',
-                  headerTextColor: '#ff0000',
-                }}
-              />
-              <View className="space-x-6" style={styles.buttonContainer}>
-                <TouchableOpacity
-                  onPress={goToPreviousTab}
-                  style={styles.backButton}>
-                  <Text style={styles.backButtonText}>Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={goToNextTab}
-                  style={styles.nextButton}>
-                  <Text style={styles.nextButtonText}>Next</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Tab 3: End Time */}
-            <View style={styles.tab}>
-              <Text  style={styles.title}>Select End Time</Text>
-              <DatePicker
-                date={selectedEndTime}
-                onDateChange={handleEndTimeChange}
-                mode="time"
-                style={[styles.datePicker]} // Red background
-                textColor="#000" // White text for contrast
-                theme="light" // Ensures light theme (if supported by library)
-                // For Android spinner style:
-                is24hourSource="device"
-                dividerHeight={1}
-                // dividerColor="#ff0000"
-                // For iOS:
-                modalProps={{
-                  buttonTextColorIOS: '#ff0000',
-                  headerTextColor: '#ff0000',
-                }}
-              />
-              <View className="space-x-6" style={styles.buttonContainer}>
-                <TouchableOpacity
-                  onPress={goToPreviousTab}
-                  style={styles.backButton}>
-                  <Text style={styles.backButtonText}>Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={goToNextTab}
-                  style={styles.nextButton}>
-                  <Text style={styles.nextButtonText}>Finish</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </>
-        )}
-      </Animated.View>
+      </View>
     </View>
   );
 };
@@ -189,6 +155,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+    alignItems: 'center',
   },
   animatedContainer: {
     flexDirection: 'row',
@@ -209,7 +176,6 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     // backgroundColor: '#e5e7eb', // Red background
     borderRadius: 10, // Optional rounded corners
-
   },
   buttonContainer: {
     flexDirection: 'row',

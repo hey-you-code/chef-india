@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useRoute} from '@react-navigation/native';
 import Menu from '../components/Menu/Menu';
@@ -17,9 +17,14 @@ const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
 const UserMenuScreen = ({navigation}) => {
   const {formData} = useSelector(state => state.chefBooking);
+  const {user} = useSelector(state => state.user);
   const dispatch = useDispatch();
   const route = useRoute();
   const {actionApplicable, menuType, country} = route.params || {};
+
+
+
+
   return (
     <View style={{width: WIDTH}} className="flex-1 bg-white relative">
       <ImageBackground

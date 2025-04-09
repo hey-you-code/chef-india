@@ -4,45 +4,73 @@ import {useDispatch, useSelector} from 'react-redux';
 import {setFormData} from '../../features/slices/chefbookingSlice';
 
 const WhatComponent = ({onNext}) => {
-  // Declare ALL hooks at the top unconditionally
   const [activeTab, setActiveTab] = useState('breakfast');
   const [selectedSpecial, setSelectedSpecial] = useState(null);
   const {formData} = useSelector(state => state.chefBooking);
   const dispatch = useDispatch();
 
-  // Get booking type once at the top
   const bookingType = formData?.bookingType;
-  const tabs = ['breakfast', 'lunch', 'snacks', 'dinner'];
+  const tabs = ['breakfast', 'lunch', 'dinner'];
   const specialOptions = ['Marriage', 'Birthday', 'Anniversary', 'Other'];
 
-  // Reset states when bookingType changes
   useEffect(() => {
     setActiveTab('breakfast');
     setSelectedSpecial(null);
   }, [bookingType]);
 
-  // Regular booking logic
+  // Mapping meal types to time slots
+  const timeSlotMapping = {
+    breakfast: 'morning',
+    lunch: 'afternoon',
+    dinner: 'evening',
+  };
+
+  // Update `timeSlots` in `eventTimings` dynamically
+  useEffect(() => {
+    if (bookingType !== 'regular') return;
+
+    let updatedTimeSlots = [];
+
+    tabs.forEach(mealType => {
+      if (formData?.eventType?.[mealType]?.numberOfItems > 0) {
+        updatedTimeSlots.push(timeSlotMapping[mealType]);
+      }
+    });
+
+    dispatch(
+      setFormData({
+        field: 'eventTimings',
+        subfield: 'timeSlots',
+        value: updatedTimeSlots,
+      }),
+    );
+  }, [formData?.eventType, bookingType]);
+
+  // console.log("formData: ", formData);
+
   const counterValue = formData?.eventType?.[activeTab]?.numberOfItems ?? 0;
 
-  const handleRegularCounter = (operation) => {
-    const newValue = operation === 'increment' ? counterValue + 1 : Math.max(counterValue - 1, 0);
+  const handleRegularCounter = operation => {
+    const newValue =
+      operation === 'increment'
+        ? counterValue + 1
+        : Math.max(counterValue - 1, 0);
+
     dispatch(
       setFormData({
         field: 'eventType',
         subfield: activeTab,
         subfield2: 'numberOfItems',
         value: newValue,
-      })
+      }),
     );
   };
 
-  // Special booking logic
-  const handleSpecialSelection = (option) => {
+  const handleSpecialSelection = option => {
     setSelectedSpecial(option);
-    dispatch(setFormData({ field: 'eventType', value: option }));
+    dispatch(setFormData({field: 'eventType', value: option}));
   };
 
-  // Conditional rendering based on booking type
   if (bookingType === 'regular') {
     return (
       <View style={styles.container}>
@@ -52,7 +80,11 @@ const WhatComponent = ({onNext}) => {
               key={tab}
               style={[styles.tab, activeTab === tab && styles.activeTab]}
               onPress={() => setActiveTab(tab)}>
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab && styles.activeTabText,
+                ]}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
             </TouchableOpacity>
@@ -62,14 +94,14 @@ const WhatComponent = ({onNext}) => {
         <View style={styles.counterContainer}>
           <Text style={styles.counterLabel}>Number of Items</Text>
           <View style={styles.counterControls}>
-            <TouchableOpacity 
-              style={styles.counterButton} 
+            <TouchableOpacity
+              style={styles.counterButton}
               onPress={() => handleRegularCounter('decrement')}>
               <Text style={styles.counterButtonText}>–</Text>
             </TouchableOpacity>
             <Text style={styles.counterValue}>{counterValue}</Text>
-            <TouchableOpacity 
-              style={styles.counterButton} 
+            <TouchableOpacity
+              style={styles.counterButton}
               onPress={() => handleRegularCounter('increment')}>
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
@@ -82,7 +114,7 @@ const WhatComponent = ({onNext}) => {
   if (bookingType === 'special' || bookingType === 'catering') {
     return (
       <View style={styles.container}>
-        <Text style={styles.specialHeader}>Select Event Type</Text>
+        <Text style={styles.specialHeader}>What is the Event Type ?</Text>
         <View style={styles.specialGrid}>
           {specialOptions.map((option, index) => (
             <TouchableOpacity
@@ -92,10 +124,12 @@ const WhatComponent = ({onNext}) => {
                 selectedSpecial === option && styles.specialOptionSelected,
               ]}
               onPress={() => handleSpecialSelection(option)}>
-              <Text style={[
-                styles.specialOptionText,
-                selectedSpecial === option && styles.specialOptionTextSelected
-              ]}>
+              <Text
+                style={[
+                  styles.specialOptionText,
+                  selectedSpecial === option &&
+                    styles.specialOptionTextSelected,
+                ]}>
                 {option}
               </Text>
             </TouchableOpacity>
@@ -105,7 +139,6 @@ const WhatComponent = ({onNext}) => {
     );
   }
 
-  // Fallback for unknown booking types
   return (
     <View style={styles.container}>
       <Text>Please select a booking type first</Text>
@@ -118,9 +151,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     width: 350,
     alignSelf: 'center',
-    // height: "fill"
   },
-  // Regular booking styles:
   tabsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -173,13 +204,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#333',
   },
-  // Special booking styles:
   specialHeader: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
+    textAlign: 'left',
+    paddingLeft: 10
   },
   specialGrid: {
     flexDirection: 'row',
@@ -188,7 +218,7 @@ const styles = StyleSheet.create({
   },
   specialOption: {
     width: '45%',
-    paddingVertical: 20,
+    paddingVertical: 15,
     marginVertical: 10,
     backgroundColor: '#f0f0f0',
     borderRadius: 10,

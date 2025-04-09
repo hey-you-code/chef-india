@@ -41,8 +41,6 @@ const ChefBookingScreen = ({navigation}) => {
     };
   }, [navigation, dispatch]);
 
-
-
   if (!user) {
     return (
       <GestureHandlerRootView style={{flex: 1}}>
@@ -87,10 +85,12 @@ const ChefBookingScreen = ({navigation}) => {
           <View className="mx-2" />
         </View>
 
+        {/* <View className="my-10 mx-4">
+          <Text className="text-black text-3xl font-bold text-center">
+            COMING SOON
+          </Text>
+        </View> */}
         <View>
-          {/* <Text className="px-2 py-4 text-2xl text-black/80 font-semibold tracking-tighter uppercase">
-            TYPE OF BOOKING
-          </Text> */}
           <View className="w-[90vw] mx-auto space-y-4">
             <View className="w-full mx-auto max-w-md flex-row justify-between">
               <TouchableOpacity
@@ -119,7 +119,6 @@ const ChefBookingScreen = ({navigation}) => {
                     Booking for small personal events for less than 10 people
                   </Text>
 
-                  {/* Updated View for Ionicons */}
                   <View className="absolute bottom-4 items-end w-[98%]">
                     <Ionicons
                       name="arrow-forward-circle"
@@ -156,7 +155,6 @@ const ChefBookingScreen = ({navigation}) => {
                     Booking for larger events
                   </Text>
 
-                  {/* Updated View for Ionicons */}
                   <View className="absolute bottom-4 items-end w-[98%]">
                     <Ionicons
                       name="arrow-forward-circle"
@@ -196,7 +194,6 @@ const ChefBookingScreen = ({navigation}) => {
                     Book catering services for your events
                   </Text>
 
-                  {/* Updated View for Ionicons */}
                   <View className="absolute bottom-4 items-end w-[98%]">
                     <Ionicons
                       name="arrow-forward-circle"
@@ -229,7 +226,6 @@ const ChefBookingScreen = ({navigation}) => {
                     Hire Chefs for your business
                   </Text>
 
-                  {/* Updated View for Ionicons */}
                   <View className="absolute bottom-4 items-end w-[98%]">
                     <Ionicons
                       name="arrow-forward-circle"
@@ -242,12 +238,6 @@ const ChefBookingScreen = ({navigation}) => {
             </View>
           </View>
         </View>
-
-        {/* NEXT PAGE */}
-        {/* Pick Menu */}
-
-        {/* NEXT PAGE */}
-        {/* Pay and confirm booking */}
       </ImageBackground>
     </SafeAreaView>
   );
