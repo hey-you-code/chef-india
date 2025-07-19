@@ -11,6 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -59,10 +60,10 @@ const ProfileScreen = ({navigation}) => {
 
   // console.log('bookings of user: ', data?.data?.bookings);
 
-  console.log(
-    'Bookings: ',
-    JSON.stringify(data?.data?.bookings.slice(0, 1), null, 2),
-  );
+  // console.log(
+  //   'Bookings: ',
+  //   JSON.stringify(data?.data?.bookings.slice(0, 1), null, 2),
+  // );
 
   if (!user) {
     return (
@@ -137,6 +138,7 @@ const ProfileScreen = ({navigation}) => {
     );
   };
 
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ImageBackground
@@ -156,7 +158,9 @@ const ProfileScreen = ({navigation}) => {
         />
 
         {/* Header */}
-        <View className="mx-2 flex-row w-screen space-x-2 mt-[50px]">
+        <View
+        style={{marginTop: Platform.OS === 'android' ? 50 : 0}}
+        className="mx-2 flex-row w-screen space-x-2">
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={30} color={'black'} />
           </TouchableOpacity>

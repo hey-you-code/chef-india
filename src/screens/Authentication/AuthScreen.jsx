@@ -111,7 +111,7 @@ const AuthScreen = ({navigation}) => {
         phoneNumber: formattedValue,
       }).unwrap();
 
-      console.log(response); 
+      // console.log(response); 
       setTab(tab => tab + 1);
     } catch (error) {
       console.log('error while sending otp: ', error);
@@ -184,7 +184,7 @@ const AuthScreen = ({navigation}) => {
         backgroundColor={'#FF3130'}
         barStyle={'light-content'}
       />
-      <View className={tab === 0 ? 'absolute z-10 px-4' : ' z-10 px-4'}>
+      <View className={tab === 0 ? 'absolute z-10 px-4' : ' z-10 px-4'} style={tab === 0 && Platform.OS === 'ios' && {top: 50}}>
         <TouchableOpacity
           onPress={() => {
             if (tab === 0) {
@@ -206,7 +206,7 @@ const AuthScreen = ({navigation}) => {
           resizeMode="contain"
           className=""
           style={{flex: 1, height: HEIGHT}}>
-          <View style={{height: HEIGHT * 0.9}} className="justify-end">
+          <View style={{height: HEIGHT * 0.87}} className="justify-end">
             <TouchableOpacity
               onPress={() => setTab(tab + 1)}
               style={{width: WIDTH * 0.9}}

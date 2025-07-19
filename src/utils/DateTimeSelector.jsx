@@ -21,12 +21,42 @@ const DateTimeSelector = ({onNext}) => {
   const dispatch = useDispatch();
   const {formData, bookingType} = useSelector(state => state.chefBooking);
 
+  const currentHour = new Date().getHours();
+
+  const getDisabledSlots = () => {
+    const disabled = [];
+
+    if (currentHour >= 12 && currentHour < 22) {
+      disabled.push('morning');
+    }
+    if (currentHour >= 16 && currentHour < 22) {
+      disabled.push('afternoon');
+    }
+    // if (currentHour >= 22) {
+    //   disabled.push('evening', 'fullday') ;
+    // }
+
+    return disabled;
+  };
+
+  // const disabledSlots = getDisabledSlots();
+
   // Instead of using local state for dates/times, we read them from global state.
   // formData.eventTimings is updated by the CalendarComponent and DatePickers.
   const eventTimings = formData.eventTimings || {};
   const selectedDate = eventTimings.startDate; // set by CalendarComponent
   const selectedStartTime = eventTimings.startTime || new Date();
   const selectedEndTime = eventTimings.endTime || new Date();
+
+  const isToday = selectedDate
+    ? new Date(selectedDate).toDateString() === new Date().toDateString()
+    : false;
+
+  const disabledSlots = isToday
+    ? getDisabledSlots()
+    : !selectedDate
+    ? ['morning', 'afternoon', 'evening', 'fullday']
+    : [];
 
   // currentTab: 0 = Calendar, 1 = Start Time, 2 = End Time
   const [currentTab, setCurrentTab] = useState(0);
@@ -99,18 +129,27 @@ const DateTimeSelector = ({onNext}) => {
           <View className="flex-row justify-between space-x-2 pt-3 rounded-xl">
             {timeSlots.map((slot, index) => {
               const formattedSlot = slot.toLowerCase().replace(/\s+/g, '');
+              const isSelected =
+                formData?.eventTimings?.timeSlots?.includes(formattedSlot);
+              const isDisabled = disabledSlots.includes(formattedSlot);
+
               return (
                 <TouchableOpacity
                   key={index}
-                  onPress={() => handleSelect(slot)}
-                  className={`flex-1 py-2  rounded-md items-center justify-center ${
-                    formData?.eventTimings?.timeSlots?.includes(formattedSlot)
+                  onPress={() => !isDisabled && handleSelect(slot)}
+                  disabled={isDisabled}
+                  className={`flex-1 py-2 rounded-md items-center justify-center ${
+                    isDisabled
+                      ? 'bg-gray-300 opacity-50'
+                      : isSelected
                       ? 'bg-black'
                       : 'bg-gray-200'
                   }`}>
                   <Text
                     className={`text-xs font-semibold ${
-                      formData?.eventTimings?.timeSlots?.includes(formattedSlot)
+                      isDisabled
+                        ? 'text-gray-500'
+                        : isSelected
                         ? 'text-white'
                         : 'text-black'
                     }`}>

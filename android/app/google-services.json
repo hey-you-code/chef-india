@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "26209426932",
+    "project_id": "cibo-43d54",
+    "storage_bucket": "cibo-43d54.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:26209426932:android:c5e4d7ac7632192a5cada1",
+        "android_client_info": {
+          "package_name": "com.cheffindiauserapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "26209426932-0r8ttob16nrq5u927e80u5ajoq5c6eo6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cheffindiauserapp",
+            "certificate_hash": "3812b6e55542f965db750b2ca3a683526cd0129e"
+          }
+        },
+        {
+          "client_id": "26209426932-d5oma5oe9aii35hlg1k0tgg0q9e89lh9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDn5qD8Y5MUmTgNo-kRQ41CFSyaqeK89UQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "26209426932-d5oma5oe9aii35hlg1k0tgg0q9e89lh9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

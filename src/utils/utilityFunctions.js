@@ -63,6 +63,7 @@ export const fetchCurrentLocation = async () => {
       }
   
       const addressComponents = results[0].address_components;
+
       const getComponent = (type) =>
         addressComponents.find((c) => c.types.includes(type))?.long_name || '';
   

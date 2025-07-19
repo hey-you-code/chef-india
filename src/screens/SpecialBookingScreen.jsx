@@ -6,6 +6,7 @@ import {
   StatusBar,
   ImageBackground,
   Dimensions,
+  Platform,
 } from 'react-native';
 import React from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -48,7 +49,7 @@ const SpecialBookingScreen = ({navigation}) => {
           barStyle={'dark-content'}
         />
         {currentPage === 0 ? (
-          <View className="mx-2 flex-row space-x-2 items-center py-2 mt-[50px] ">
+          <View style={Platform.OS === 'ios' ? {} : {marginVertical: 50}}  className="mx-2 flex-row space-x-2 items-center py-2  ">
             <TouchableOpacity
               className=""
               onPress={() => {
@@ -57,7 +58,7 @@ const SpecialBookingScreen = ({navigation}) => {
               }}>
               <Ionicons name="close-circle" size={30} color="#6b7280" />
             </TouchableOpacity>
-            <View className="flex-1">
+            <View  className="flex-1">
               <Text className="text-2xl font-semibold tracking-tighter text-center text-gray-500">
                 {formData.bookingType === "special" ?  "Special Booking" :  "Catering Booking" }
               </Text>

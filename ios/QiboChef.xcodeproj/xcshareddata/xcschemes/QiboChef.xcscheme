@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "cheffindiauserapp.app"
-               BlueprintName = "cheffindiauserapp"
-               ReferencedContainer = "container:cheffindiauserapp.xcodeproj">
+               BuildableName = "QiboChef.app"
+               BlueprintName = "QiboChef"
+               ReferencedContainer = "container:QiboChef.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "cheffindiauserappTests.xctest"
-               BlueprintName = "cheffindiauserappTests"
-               ReferencedContainer = "container:cheffindiauserapp.xcodeproj">
+               BuildableName = "QiboChefTests.xctest"
+               BlueprintName = "QiboChefTests"
+               ReferencedContainer = "container:QiboChef.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "cheffindiauserapp.app"
-            BlueprintName = "cheffindiauserapp"
-            ReferencedContainer = "container:cheffindiauserapp.xcodeproj">
+            BuildableName = "QiboChef.app"
+            BlueprintName = "QiboChef"
+            ReferencedContainer = "container:QiboChef.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "cheffindiauserapp.app"
-            BlueprintName = "cheffindiauserapp"
-            ReferencedContainer = "container:cheffindiauserapp.xcodeproj">
+            BuildableName = "QiboChef.app"
+            BlueprintName = "QiboChef"
+            ReferencedContainer = "container:QiboChef.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

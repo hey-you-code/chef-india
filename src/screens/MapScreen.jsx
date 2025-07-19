@@ -19,7 +19,7 @@ import MapView, {Circle, Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import Geolocation from 'react-native-geolocation-service';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Fonticons from 'react-native-vector-icons/FontAwesome6';
+import Fonticons from 'react-native-vector-icons/FontAwesome5';
 import axios from 'axios';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -415,7 +415,7 @@ const MapScreen = ({navigation}) => {
         style={styles.currentLocationButton}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Fonticons
-            name="location-crosshairs"
+            name="location-arrow"
             size={20}
             color="#FF3130"
             style={{marginRight: 8}}

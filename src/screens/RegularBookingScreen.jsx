@@ -43,7 +43,7 @@ const RegularBookingScreen = ({navigation}) => {
           barStyle={'dark-content'}
         />
       {currentPage === 0 ? (
-        <View className="mx-2 flex-row space-x-2 items-center py-2 mt-[50px] ">
+        <View style={Platform.OS === 'ios' ? {} : {marginVertical: 50}} className="mx-2 flex-row space-x-2 items-center py-2">
           <TouchableOpacity
             className=""
             onPress={() => {

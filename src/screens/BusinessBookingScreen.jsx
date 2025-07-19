@@ -9,10 +9,10 @@ const {width: WIDTH, height: HEIGHT} = Dimensions.get('window');
 
 const BusinessBookingScreen = ({navigation}) => {
   return (
-    <View style={{width: WIDTH}} className="flex-1 bg-white relative">
+    <View style={{width: WIDTH}} className="flex-1 bg-[#FF3130] relative">
       <ImageBackground
         source={business_booking}
-        resizeMode="cover"
+        resizeMode="contain"
         className=""
         style={{flex: 1}}>
         {/* <View

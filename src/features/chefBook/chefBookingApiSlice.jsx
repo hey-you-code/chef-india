@@ -26,12 +26,13 @@ export const chefBookingApiSlice = apiSlice.injectEndpoints({
       }),
     }),
     findCatering: builder.mutation({
-      query: ({latitude, longitude, startDate, endDate, timeSlots}) => {
+      query: ({latitude, longitude, startDate, endDate, timeSlots, isVeg = false}) => {
         const params = new URLSearchParams({
           latitude: latitude,
           longitude: longitude,
           startDate: startDate ? encodeURIComponent(startDate) : '',
           endDate: encodeURIComponent(endDate ?? startDate),
+          isVeg: isVeg,
           // timeSlots: timeSlots?.[0], 
         });
 
@@ -58,7 +59,32 @@ export const chefBookingApiSlice = apiSlice.injectEndpoints({
         };
       },
     }),
-
+    bookingRatings: builder.query({
+      query: (userId) => {
+        const params = new URLSearchParams({
+          userId: userId,
+        });
+        return {
+        url: `${BASE_URL}/userRatings?${params.toString()}`,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+    },
+    }),
+    postBookingRatings: builder.mutation({
+      query: payload => {
+        return {
+          url: `${BASE_URL}/userRatings`,
+          method: 'POST',
+          body: payload,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+      },
+    }),
     
   }),
 });
@@ -68,4 +94,6 @@ export const {
   useFindCateringMutation,
   useBookCateringMutation,
   useGetAvailableChefsMutation,
+  useBookingRatingsQuery,
+  usePostBookingRatingsMutation
 } = chefBookingApiSlice;

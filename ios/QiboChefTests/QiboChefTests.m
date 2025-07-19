@@ -7,11 +7,11 @@
 #define TIMEOUT_SECONDS 600
 #define TEXT_TO_LOOK_FOR @"Welcome to React"
 
-@interface cheffindiauserappTests : XCTestCase
+@interface QiboChefTests : XCTestCase
 
 @end
 
-@implementation cheffindiauserappTests
+@implementation QiboChefTests
 
 - (BOOL)findSubviewInView:(UIView *)view matching:(BOOL (^)(UIView *view))test
 {

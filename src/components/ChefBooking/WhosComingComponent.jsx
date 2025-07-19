@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Dimensions,
   TextInput,
+  Platform,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {setFormData} from '../../features/slices/chefbookingSlice';
@@ -61,6 +62,7 @@ const WhosComingComponent = ({}) => {
               placeholder='Ex: 500'
               placeholderTextColor={"gray"}
               className="border px-4 rounded-xl w-[100px] text-black"
+              style={Platform.OS === 'ios' ? {height: 40}: {}}
             />
           </View>
         ) : undefined}

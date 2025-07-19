@@ -65,6 +65,25 @@ const CalendarComponent = () => {
     }
   };
 
+  const getDisabledTodayMarking = () => {
+    const now = new Date();
+    const hour = now.getHours();
+
+    if (hour >= 22 || bookingType === 'regular') {
+      const today = getTodayDate();
+      return {
+        [today]: {
+          disabled: true,
+          disableTouchEvent: true,
+          customStyles: {
+            text: {color: '#d9e1e8'},
+          },
+        },
+      };
+    }
+    return {};
+  };
+
   // Build markedDates using "period" marking so the selection appears as one continuous strip.
   const getMarkedDates = () => {
     let markedDates = {};
@@ -122,14 +141,34 @@ const CalendarComponent = () => {
     //   },
     // };
 
+    markedDates = {
+      ...markedDates,
+      ...getDisabledTodayMarking(),
+    };
+
     return markedDates;
   };
 
-  const minDate = getTodayDate();
+  const getDynamicMinDate = () => {
+    const now = new Date();
+    const hour = now.getHours();
+
+    if (bookingType === 'regular') {
+      return getTomorrowDate();
+    }
+
+    if (hour >= 22) {
+      // After 11 PM, disable today
+      return getTomorrowDate();
+    }
+    return getTodayDate();
+  };
+
+  const minDate = getDynamicMinDate();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>When do you wanna book?</Text>
+      <Text style={styles.title}>Select your Date and Time</Text>
       <Calendar
         markingType="period"
         minDate={minDate}

@@ -62,7 +62,10 @@ const Banner = () => {
           >
             <Image
               source={{ uri: item.uri }}
-              className="h-[180px] w-[98%] rounded-xl mx-auto object-cover"
+              style={{
+                aspectRatio: 5/2
+              }}
+              className="w-[98%] rounded-xl mx-auto object-cover"
             />
           </View>
         )}

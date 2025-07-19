@@ -49,7 +49,7 @@ const FirstPage = ({navigation}) => {
     new Animated.Value(formData.bookingType === 'regular' ? 250 : 300),
   ).current;
 
-  const [getAvailableChefs, {isLoading: isFetchingAAvailableChefs}] =
+  const [getAvailableChefs, {isLoading: isFetchingAvailableChefs}] =
     useGetAvailableChefsMutation();
 
   useEffect(() => {
@@ -83,7 +83,7 @@ const FirstPage = ({navigation}) => {
   const expandWhenSection = () => {
     Animated.parallel([
       Animated.timing(calendarHeight, {
-        toValue: screenHeight * 0.8,
+        toValue: screenHeight * 0.65,
         duration: 300,
         useNativeDriver: false,
       }),
@@ -223,7 +223,7 @@ const FirstPage = ({navigation}) => {
     return true;
   };
 
-  console.log("FormData: ", JSON.stringify(formData, null, 2));
+  // console.log("FormData: ", JSON.stringify(formData, null, 2));
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -277,6 +277,25 @@ const FirstPage = ({navigation}) => {
       <Animated.View style={[styles.whoContainer, {height: whoHeight}]}>
         <WhosComingComponent />
       </Animated.View>
+
+      <View style={styles.whoButton}>
+        <Text style={styles.whenText}>Vegetarian</Text>
+        <TouchableOpacity
+          onPress={() =>
+            dispatch(setFormData({field: 'isVeg', value: !formData?.isVeg}))
+          }
+          style={[
+            styles.toggleButton,
+            formData?.isVeg ? styles.toggleOn : styles.toggleOff,
+          ]}>
+          <View
+            style={[
+              styles.toggleCircle,
+              formData?.isVeg ? styles.toggleCircleOn : styles.toggleCircleOff,
+            ]}
+          />
+        </TouchableOpacity>
+      </View>
 
       {/* Where Tab for navigation */}
       <TouchableOpacity
@@ -369,18 +388,19 @@ const FirstPage = ({navigation}) => {
             return;
           }
 
-          console.log('eventTimings:', JSON.stringify({
-            customerLocation: formData?.customerLocation,
-            eventTimings: formData?.eventTimings,
-          }, null, 2));
+          // console.log('eventTimings:', JSON.stringify({
+          //   customerLocation: formData?.customerLocation,
+          //   eventTimings: formData?.eventTimings,
+          // }, null, 2));
 
           try {
             const response = await getAvailableChefs({
               customerLocation: formData?.customerLocation,
               eventTimings: formData?.eventTimings,
+              isVeg: formData?.isVeg ?? false
             }).unwrap();
 
-            console.log('response: ', response?.data);
+            // console.log('response: ', response?.data);
 
             if (!response?.data?.chefExists) {
               notify('error', {
@@ -436,7 +456,7 @@ const FirstPage = ({navigation}) => {
         className={checkValidation() ? 'bg-red-500' : 'bg-red-500/60'}>
         {/* <Text style={styles.whenText}>Next</Text> */}
         <Text className="text-white text-[22px] text-center">
-          {isFetchingAAvailableChefs ? 'Checking...' : 'Next'}
+          {isFetchingAvailableChefs ? 'Checking...' : 'Next'}
         </Text>
       </TouchableOpacity>
 
@@ -458,7 +478,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     shadowColor: '#000',
-    shadowOpacity: 0.9,
+    shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
     flexDirection: 'row',
@@ -533,6 +553,49 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontSize: 18,
+  },
+  vegContainer: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  vegText: {
+    fontSize: 16,
+    color: 'black',
+  },
+  toggleButton: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  toggleOn: {
+    backgroundColor: '#4CAF50', // Green when on
+  },
+  toggleOff: {
+    backgroundColor: '#E0E0E0', // Gray when off
+  },
+  toggleCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'white',
+  },
+  toggleCircleOn: {
+    alignSelf: 'flex-end',
+  },
+  toggleCircleOff: {
+    alignSelf: 'flex-start',
   },
 });
 

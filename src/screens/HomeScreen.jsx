@@ -8,8 +8,9 @@ import {
   ImageBackground,
   Dimensions,
   StatusBar,
+  Platform,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Entypoicons from 'react-native-vector-icons/Entypo';
 import bookchef from '../../assets/bookchef.png';
@@ -28,6 +29,10 @@ import {
 } from '../utils/utilityFunctions';
 import {setUser} from '../features/slices/userSlice';
 import LottieView from 'lottie-react-native';
+import RatingBottomSheet from '../components/Home/RatingBottomSheet';
+import {useBottomSheet} from '../contexts/BottomSheetContext';
+import {useBookingRatingsQuery} from '../features/chefBook/chefBookingApiSlice';
+import {skipToken} from '@reduxjs/toolkit/query';
 
 const OPERATED_STATES = ['Assam', 'Telangana'];
 
@@ -35,6 +40,8 @@ const HomeScreen = ({navigation}) => {
   const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
   const {user} = useSelector(state => state.user);
   const [fetchingCurrentLocation, setFetchingCurrentLocation] = useState(false);
+
+  const {openBottomSheet, closeBottomSheet} = useBottomSheet();
 
   const dispatch = useDispatch();
 
@@ -108,7 +115,38 @@ const HomeScreen = ({navigation}) => {
     }
   }, [user]);
 
-  console.log("user: ", user);
+  // To open automatically on mount
+  const userId = user?.user?._id;
+  const {data, isLoading, error} = useBookingRatingsQuery(userId ?? skipToken);
+
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     handleOpenRatingBottomSheet();
+  //   }, 200);
+  //   return () => clearTimeout(timer);
+  // }, []);
+
+  // console.log('data: ', data);
+  // console.log('error: ', error);
+
+  useEffect(() => {
+    if (data?.data?.ratingsGiven === false) {
+      handleOpenRatingBottomSheet();
+    }
+  }, [data]);
+
+  const handleOpenRatingBottomSheet = () => {
+    openBottomSheet(
+      <RatingBottomSheet
+        closeBottomSheet={closeBottomSheet}
+        bookingId={data?.data?.bookingId}
+      />,
+      ['80%', '100%'],
+      'RATINGSCREEN',
+    );
+  };
+
+  // console.log("user: ", user);
 
   // console.log('userrr: ', user);
 
@@ -147,9 +185,6 @@ const HomeScreen = ({navigation}) => {
     );
   }
 
-
-
-
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ImageBackground
@@ -168,7 +203,9 @@ const HomeScreen = ({navigation}) => {
           backgroundColor={'transparent'}
           barStyle={'dark-content'}
         />
-        <View className="flex-row justify-between w-screen  items-center mt-[50px]">
+        <View
+          style={{marginTop: Platform.OS === 'android' ? 50 : 0}}
+          className="flex-row justify-between w-screen  items-center">
           <View className="pl-2">
             {/* <Text className="text-3xl font-bold text-black">Cheff India</Text> */}
             <Image source={logo} className="h-[30px] w-[160px]" />

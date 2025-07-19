@@ -17,7 +17,9 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {Dimensions} from 'react-native';
 import {format} from 'date-fns';
 import {Linking} from 'react-native';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
+import {useBottomSheet} from '../contexts/BottomSheetContext';
+import RatingBottomSheet from '../components/Home/RatingBottomSheet';
 
 const {width: WIDTH} = Dimensions.get('window');
 
@@ -26,8 +28,7 @@ const BookingsScreen = ({navigation}) => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('confirmed');
 
-
- 
+  const {openBottomSheet, closeBottomSheet} = useBottomSheet();
 
   const handleCallChef = phoneNumber => {
     try {
@@ -71,6 +72,18 @@ const BookingsScreen = ({navigation}) => {
     }
   };
 
+  const handleOpenRatingBottomSheet = bookingId => {
+    openBottomSheet(
+      <RatingBottomSheet
+        closeBottomSheet={closeBottomSheet}
+        bookingId={bookingId}
+        refreshBooking={async () => await refetch()}
+      />,
+      ['80%', '100%'],
+      'RATINGSCREEN',
+    );
+  };
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
@@ -95,7 +108,6 @@ const BookingsScreen = ({navigation}) => {
     }
   };
 
-
   const renderBookingItem = booking => {
     const chefName =
       booking?.catering?.name ||
@@ -104,7 +116,7 @@ const BookingsScreen = ({navigation}) => {
       'N/A';
     const chefPhoneNumber =
       booking?.catering?.phoneNumber || booking?.chef?.phoneNumber || 'N/A';
-      
+
     const isCompleted = booking.bookingStatus === 'completed';
 
     return (
@@ -121,78 +133,114 @@ const BookingsScreen = ({navigation}) => {
           </View>
         </View>
 
-        <View style={styles.cardBody}>
-          {booking?.bookingType !== 'regular' && (
-            <View style={styles.detailRow}>
-              <Ionicons name="newspaper-outline" size={16} color="#6B7280" />
-              <Text style={styles.detailText}>{booking.eventType}</Text>
-            </View>
-          )}
+        <View className="overflow-hidden" style={styles.cardBody}>
+          <View>
+            {booking?.bookingType !== 'regular' && (
+              <View style={styles.detailRow}>
+                <Ionicons name="newspaper-outline" size={16} color="#6B7280" />
+                <Text style={styles.detailText}>{booking.eventType}</Text>
+              </View>
+            )}
 
-          <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-            {booking.eventTimings.startDate === booking.eventTimings.endDate ? (
+            <View style={styles.detailRow}>
+              <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+              {booking.eventTimings.startDate ===
+              booking.eventTimings.endDate ? (
+                <Text style={styles.detailText}>
+                  {formatDate(booking.eventTimings.startDate)}
+                </Text>
+              ) : (
+                <Text style={styles.detailText}>
+                  {formatDate(booking.eventTimings.startDate)} -
+                  {formatDate(booking.eventTimings.endDate)}
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.detailRow}>
+              <Ionicons name="time-outline" size={16} color="#6B7280" />
+              {booking.eventTimings.timeSlots.map((slot, index) => (
+                <View key={index}>
+                  <Text style={styles.detailText}>
+                    {booking.bookingType === 'regular'
+                      ? getMealType(slot)
+                      : slot}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.detailRow}>
+              <Ionicons name="person-outline" size={16} color="#6B7280" />
               <Text style={styles.detailText}>
-                {formatDate(booking.eventTimings.startDate)}
+                {booking.numberOfGuests} Guests
               </Text>
-            ) : (
-              <Text style={styles.detailText}>
-                {formatDate(booking.eventTimings.startDate)} -
-                {formatDate(booking.eventTimings.endDate)}
-              </Text>
+            </View>
+
+            {!isCompleted && (
+              <>
+                <View style={styles.detailRow}>
+                  <MaterialCommunityIcons
+                    name="chef-hat"
+                    size={16}
+                    color="#6B7280"
+                  />
+                  <Text style={styles.detailText}>
+                    Your chef Name - {chefName}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Ionicons name="call-outline" size={16} color="#6B7280" />
+                  <Text style={styles.detailText}>{chefPhoneNumber}</Text>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.contactRow}>
+                  <TouchableOpacity
+                    onPress={() => handleCallChef(chefPhoneNumber)}
+                    style={styles.contactButton}>
+                    <Ionicons name="call-outline" size={16} color="#EF4444" />
+                    <Text style={styles.contactText}>Call Chef</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => handleMessageChef(chefPhoneNumber)}
+                    style={styles.contactButton}>
+                    <Ionicons
+                      name="chatbubble-outline"
+                      size={16}
+                      color="#EF4444"
+                    />
+                    <Text style={styles.contactText}>Message</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
             )}
           </View>
-
-          <View style={styles.detailRow}>
-            <Ionicons name="time-outline" size={16} color="#6B7280" />
-            {booking.eventTimings.timeSlots.map((slot, index) => (
-              <View key={index}>
-                <Text style={styles.detailText}>
-                  {booking.bookingType === 'regular' ? getMealType(slot) : slot}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.detailRow}>
-            <Ionicons name="person-outline" size={16} color="#6B7280" />
-            <Text style={styles.detailText}>
-              {booking.numberOfGuests} Guests
-            </Text>
-          </View>
-
-          {!isCompleted && (
-            <>
-              <View style={styles.detailRow}>
-                <MaterialCommunityIcons name="chef-hat" size={16} color="#6B7280" />
-                <Text style={styles.detailText}>
-                  Your chef Name - {chefName}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Ionicons name="call-outline" size={16} color="#6B7280" />
-                <Text style={styles.detailText}>{chefPhoneNumber}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.contactRow}>
+          {isCompleted ? (
+            <View className="overflow-hidden">
+              {booking?.ratingsGiven ? (
+                <View className="flex-row items-center space-x-3">
+                  <Text className="text-[22px] text-gray-400">
+                    {parseFloat(booking?.ratings || 0).toFixed(1)}
+                  </Text>
+                  <Ionicons name="star" color="#9ca3af" size={24} />
+                </View>
+              ) : (
                 <TouchableOpacity
-                  onPress={() => handleCallChef(chefPhoneNumber)}
-                  style={styles.contactButton}>
-                  <Ionicons name="call-outline" size={16} color="#EF4444" />
-                  <Text style={styles.contactText}>Call Chef</Text>
+                  onPress={() => {
+                    // Add your rating logic here
+                    handleOpenRatingBottomSheet(booking?._id);
+                    // console.log('Add rating pressed');
+                  }}
+                  className="flex-row items-center space-x-2 bg-blue-500 px-4 py-2 rounded-lg">
+                  <Text className="text-white font-medium text-[13px]">Add Rating</Text>
+                  <Ionicons name="star-outline" color="white" size={20} />
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => handleMessageChef(chefPhoneNumber)}
-                  style={styles.contactButton}>
-                  <Ionicons name="chatbubble-outline" size={16} color="#EF4444" />
-                  <Text style={styles.contactText}>Message</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
+              )}
+            </View>
+          ) : null}
         </View>
       </View>
     );
@@ -206,13 +254,15 @@ const BookingsScreen = ({navigation}) => {
     );
   }
 
-  const confirmedBookings = data?.data?.bookings?.filter(
-    booking => booking.bookingStatus === 'confirmed'
-  ) || [];
-  
-  const completedBookings = data?.data?.bookings?.filter(
-    booking => booking.bookingStatus === 'completed'
-  ) || [];
+  const confirmedBookings =
+    data?.data?.bookings?.filter(
+      booking => booking.bookingStatus === 'confirmed',
+    ) || [];
+
+  const completedBookings =
+    data?.data?.bookings?.filter(
+      booking => booking.bookingStatus === 'completed',
+    ) || [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -248,26 +298,28 @@ const BookingsScreen = ({navigation}) => {
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  activeTab === 'confirmed' && styles.activeTab
+                  activeTab === 'confirmed' && styles.activeTab,
                 ]}
                 onPress={() => setActiveTab('confirmed')}>
-                <Text style={[
-                  styles.tabText,
-                  activeTab === 'confirmed' && styles.activeTabText
-                ]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'confirmed' && styles.activeTabText,
+                  ]}>
                   Confirmed
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  activeTab === 'completed' && styles.activeTab
+                  activeTab === 'completed' && styles.activeTab,
                 ]}
                 onPress={() => setActiveTab('completed')}>
-                <Text style={[
-                  styles.tabText,
-                  activeTab === 'completed' && styles.activeTabText
-                ]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'completed' && styles.activeTabText,
+                  ]}>
                   Completed
                 </Text>
               </TouchableOpacity>
@@ -296,7 +348,6 @@ const BookingsScreen = ({navigation}) => {
     </SafeAreaView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -351,6 +402,8 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   detailRow: {
     flexDirection: 'row',

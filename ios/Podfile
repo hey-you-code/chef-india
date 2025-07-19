@@ -8,14 +8,20 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# Add this line
+use_frameworks! :linkage => :static
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
+  use_frameworks! :linkage => :static
 end
 
-target 'cheffindiauserapp' do
+target 'QiboChef' do
   config = use_native_modules!
+
+  # Add this line
+  pod 'Firebase', :modular_headers => true
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -23,10 +29,15 @@ target 'cheffindiauserapp' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  target 'cheffindiauserappTests' do
+  rn_maps_path = '../node_modules/react-native-maps'
+  pod 'react-native-maps/Google', :path => rn_maps_path
+
+  target 'QiboChefTests' do
     inherit! :complete
     # Pods for testing
   end
+
+
 
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202

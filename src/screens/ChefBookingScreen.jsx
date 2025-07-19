@@ -7,6 +7,7 @@ import {
   Image,
   ImageBackground,
   Dimensions,
+  Platform,
 } from 'react-native';
 import React, {useEffect} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -71,7 +72,7 @@ const ChefBookingScreen = ({navigation}) => {
           barStyle={'dark-content'}
         />
 
-        <View className="mx-2 flex-row space-x-2 items-center py-2 my-[50px]">
+        <View style={Platform.OS === 'ios' ? {marginBottom: 50} : {marginVertical: 50}} className="mx-2 flex-row space-x-2 items-center py-2">
           <TouchableOpacity
             className="z-20"
             onPress={() => navigation.goBack()}>

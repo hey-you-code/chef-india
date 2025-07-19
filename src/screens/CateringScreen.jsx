@@ -7,6 +7,7 @@ import {
   Image,
   Dimensions,
   PermissionsAndroid,
+  Platform,
 } from 'react-native';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -41,6 +42,10 @@ const OPERATED_STATES = ['Assam', 'Telangana'];
 const CateringScreen = ({navigation}) => {
   const {user} = useSelector(state => state.user);
   const {formData} = useSelector(state => state.chefBooking);
+
+
+  // console.log("FormData: ", JSON.stringify(formData, null, 2));
+
   
 
   const address = user?.user?.address;
@@ -131,13 +136,16 @@ const CateringScreen = ({navigation}) => {
           latitude,
           longitude,
           startDate: formData?.eventTimings?.startDate,
-          endDate: formData?.eventTimings?.endDate,
+          endDate: formData?.eventTimings?.endDate, 
           timeSlots: formData?.eventTimings?.timeSlots,
+          isVeg: formData?.isVeg ?? false, // Nullish coalescing
         }).unwrap();
+
+        console.log("response: ",  response);
 
         setAvailableCaterers(response?.data?.availableChefs);
         setChefWithinLocation(response?.data?.chefWithinLocation);
-        console.log('catering: ', response?.data);
+        // console.log('catering: ', response?.data);
       } catch (error) {
         console.error('error: ', error);
       }
@@ -209,7 +217,7 @@ const CateringScreen = ({navigation}) => {
               className="space-x-4"
               style={{
                 position: 'absolute',
-                top: 60,
+                top: Platform.OS === 'ios' ?  80 : 60,
                 left: 10,
                 right: 10,
                 zIndex: 20,
@@ -344,7 +352,7 @@ const CateringScreen = ({navigation}) => {
               disabled={fetchingCurrentLocation}
               onPress={getCurrentLocation}
               style={{
-                top: 120,
+                top: Platform.OS === 'ios' ?  140 : 120,
                 right: 30,
                 zIndex: 100,
                 flexDirection: 'row',
@@ -530,7 +538,7 @@ const styles = StyleSheet.create({
   },
   autocompleteContainer: {
     position: 'absolute',
-    top: 35,
+    top: Platform.OS === 'ios' ?  50 : 35,
     left: 60,
     right: 10,
     // marginHorizontal: 12,
